@@ -12,10 +12,10 @@
     
     <item>
       <title>How to permanently change a MAC address using ethtool</title>
-      <link>https://github.com//post/how-to-permanently-set-a-mac-address-using-ethtool/</link>
+      <link>https://github.com//post/how-to-permanently-change-a-mac-address-using-ethtool/</link>
       <pubDate>Fri, 23 Nov 2018 00:00:00 +0000</pubDate>
       
-      <guid>https://github.com//post/how-to-permanently-set-a-mac-address-using-ethtool/</guid>
+      <guid>https://github.com//post/how-to-permanently-change-a-mac-address-using-ethtool/</guid>
       <description>Changing the MAC address of a network interface can be a common task if you either change addresses for privacy reasons or if you&amp;rsquo;re performing security assessments.
 If you&amp;rsquo;re using a Linux-based operating system, this can be done using one of the following commands:
 ifconfig eth0 hw ether xx:xx:xx:xx:xx:xx

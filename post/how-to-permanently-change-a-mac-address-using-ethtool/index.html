@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    
+    <title>
+      
+      How to permanently change a MAC address using ethtool - 
+      
+		</title>
+
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <link rel="stylesheet" type="text/css" href="/assets/css/normalize.css" />
+    <link rel="stylesheet" type="text/css" href="/assets/css/icons.css" />
+    <link rel="stylesheet" type="text/css" href="/assets/css/screen.css" />
+    
+    <link href="https://fonts.loli.net/css?family=Bree+Serif|Lato:100,100i,300,300i,400,400i,700,700i|Source+Code+Pro:300,400,500,700" rel="stylesheet">
+    
+
+    
+    <script src="https://cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="/assets/bigfoot/dist/bigfoot.js"></script>
+    <link rel="stylesheet" type="text/css" href="/assets/bigfoot/dist/bigfoot-number.css" />
+    <script type="text/javascript">
+        $.bigfoot();
+    </script>
+    
+    
+</head>
+
+    <body class="post-template">
+        <header class="main-header">
+	<div class="main-header-content">
+		<h1 class="blog-title">
+			<a href="/">
+				
+           
+				
+			</a>
+		</h1>
+		<h2 class="blog-description">IT-Security and stuff</h2>
+	</div>
+
+	<div class="nav">
+    
+		
+      <a class="nav- nav-current" role="presentation" href="/post/how-to-permanently-change-a-mac-address-using-ethtool/">How to permanently change a MAC address using ethtool</a>
+		
+      <a class="nav- " role="presentation" href="/about/">About</a>
+		
+	</div>
+</header>
+
+        
+<main class="content" role="main">
+  <article class="post">
+    <header class="post-header">
+      
+      <h2 class="post-title">How to permanently change a MAC address using ethtool</h2>
+      <section class="post-meta">
+        <time class="post-date">2018-11-23</time>
+      </section>
+    </header>
+    <section class="post-content">
+      
+
+<p>Changing the MAC address of a network interface can be a common task if you either change addresses for privacy reasons or if you&rsquo;re performing security assessments.</p>
+
+<p>If you&rsquo;re using a Linux-based operating system, this can be done using one of the following commands:</p>
+
+<p><code>ifconfig eth0 hw ether xx:xx:xx:xx:xx:xx</code></p>
+
+<p><code>macchanger-ng --mac xx:xx:xx:xx:xx:xx eth0</code></p>
+
+<p><code>ip link set eth0 address xx:xx:xx:xx:xx:xx</code></p>
+
+<p>While these changes are only temporary, it&rsquo;s also possible to instruct the operating system to set the MAC address straight after booting, for example by modifying files like <code>/etc/network/interfaces</code>.</p>
+
+<p>But still, these changes would only apply to the current operating system and is not bound to the hardware itself.
+In this post I will demonstrate a method how to set the MAC address of an ethernet device permanently, so that even if you connect the device to another computer, it still uses the modifies MAC address. This will be achieved using <code>ethtool</code>. But let&rsquo;s have a look at some basic ethtool commands first:</p>
+
+<h2 id="brief-explanation-of-ethtool">Brief explanation of ethtool</h2>
+
+<p>Ethtool comes in handy when you want to debug your network interfaces. It can help to determine whether you are connected to a network or not, what the speed of the link is and if auto-negotiation is enabled.</p>
+
+<p>For some basic information about a network interface, just call ethtool without command line arguments:</p>
+
+<pre><code>$ sudo ethtool eth0
+Settings for eth0:
+    Supported ports: [ TP ]
+    Supported link modes:   10baseT/Half 10baseT/Full 
+                            100baseT/Half 100baseT/Full 
+                            1000baseT/Full 
+    Supported pause frame use: No
+    Supports auto-negotiation: Yes
+    Supported FEC modes: Not reported
+    Advertised link modes:  1000baseT/Full 
+    Advertised pause frame use: No
+    Advertised auto-negotiation: Yes
+    Advertised FEC modes: Not reported
+    Speed: 1000Mb/s
+    Duplex: Full
+    Port: Twisted Pair
+    PHYAD: 2
+    Transceiver: internal
+    Auto-negotiation: on
+    MDI-X: on (auto)
+    Supports Wake-on: pumbg
+    Wake-on: g
+    Current message level: 0x00000007 (7)
+                   drv probe link
+    Link detected: yes
+</code></pre>
+
+<p>As you can see, the link is detected, the speed is set to 1000Mb/s and Auto-negotiation is enabled.</p>
+
+<p>If you want to find out more details about the driver your interface is using, just add the <code>-i</code> argument:</p>
+
+<pre><code>$ sudo ethtool -i eth0
+driver: asix
+version: 22-Dec-2011
+firmware-version: ASIX AX88772B USB 2.0 Ethernet
+expansion-rom-version: 
+bus-info: usb-0000:00:14.0-2
+supports-statistics: no
+supports-test: no
+supports-eeprom-access: yes
+supports-register-dump: no
+supports-priv-flags: no
+</code></pre>
+
+<p>In this case, my interface is using the <code>asix</code> driver. By the way, for this example I used a USB-to-Ethernet adapter.</p>
+
+<h2 id="obtaining-the-current-mac-address-and-changing-it-permanently">Obtaining the current MAC address and changing it permanently</h2>
+
+<p>First, let&rsquo;s have a look at the current MAC address:</p>
+
+<pre><code>$ ip a show dev eth0
+9: eth0: &lt;NO-CARRIER,BROADCAST,MULTICAST,UP&gt; mtu 1500 qdisc fq_codel state DOWN group default qlen 1000
+    link/ether 00:50:b6:33:c5:e5 brd ff:ff:ff:ff:ff:ff
+</code></pre>
+
+<p>So, how could the MAC address <code>00:50:b6:33:c5:e5</code> be permanently changed to <code>00:11:22:33:44:55</code>?</p>
+
+<h3 id="retrieving-an-eeprom-dump-from-the-network-interface">Retrieving an EEPROM dump from the network interface</h3>
+
+<p>By writing directly to the EEPROM of the network device, it is possible to change the MAC address.</p>
+
+<p><code>!! CAUTION !! Writing to the EEPROM of the network device could brick the device. Before you actually write to the EEPROM, you should backup the original EEPROM</code></p>
+
+<p>To retrieve the current EEPROM content, you can use <code>ethtool</code> again:</p>
+
+<pre><code>$ ethtool -e eth0
+Offset      Values
+------      ------
+0x0000:     15 5a ec 75 20 12 29 27 00 50 b6 33 c5 e5 09 04 
+0x0010:     60 22 71 12 19 0e 3d 04 3d 04 3d 04 3d 04 80 05 
+0x0020:     00 06 10 e0 42 24 40 12 49 27 ff ff 00 00 ff ff 
+0x0030:     c0 09 0e 03 31 00 31 00 43 00 34 00 45 00 34 00 
+0x0040:     12 01 00 02 ff ff 00 40 95 0b 2b 77 01 00 01 02 
+0x0050:     03 01 09 02 27 00 01 01 04 a0 64 09 04 00 00 03 
+0x0060:     ff ff 00 07 07 05 81 03 08 00 0b 07 05 82 02 00 
+0x0070:     02 00 07 05 03 02 00 02 00 ff 04 03 30 00 ff ff 
+0x0080:     12 01 00 02 ff ff 00 08 95 0b 2b 77 01 00 01 02 
+0x0090:     03 01 09 02 27 00 01 01 04 a0 64 09 04 00 00 03 
+0x00a0:     ff ff 00 07 07 05 81 03 08 00 a0 07 05 82 02 40 
+0x00b0:     00 00 07 05 03 02 40 00 00 dd ff ff aa aa bb bb 
+0x00c0:     22 03 41 00 53 00 49 00 58 00 20 00 45 00 6c 00 
+0x00d0:     65 00 63 00 2e 00 20 00 43 00 6f 00 72 00 70 00 
+0x00e0:     2e 00 12 03 41 00 58 00 38 00 38 00 37 00 37 00 
+0x00f0:     32 00 42 00 ff ff ff ff ff ff ff ff ff ff ff ff 
+0x0100:     ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+0x0110:     ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+0x0120:     ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+0x0130:     ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+0x0140:     ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+0x0150:     ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+0x0160:     ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+0x0170:     ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+0x0180:     ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+0x0190:     ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+0x01a0:     ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+0x01b0:     ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+0x01c0:     ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+0x01d0:     ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+0x01e0:     ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff 
+0x01f0:     ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+</code></pre>
+
+<p>As you can see, ethtool returns some hex-encoded binary data, which represents the EEPROM content of the ASIX USB-to-Ethernet device. The 9th byte in the first row (offset 0x08) is the first byte of the MAC address.
+Before you proceed, this is the dump that you should store somewhere in order to have a backup in case the modification will cause issues. If you want to store an unencoded plain dump, just add the <code>raw on</code> argument:</p>
+
+<p><code>$ ethtool -e eth0 raw on &gt; eeprom-backup.bin</code></p>
+
+<h3 id="modifying-the-mac-address">Modifying the MAC address</h3>
+
+<p>Before the new MAC address is set, you should make sure that the offsets are correct. As shown above <code>-e</code> will print the EEPROM content to the screen. If you use <code>-E</code> instead, it&rsquo;s possible to write values to the EEPROM.</p>
+
+<p>Let&rsquo;s check the offsets first:</p>
+
+<pre><code>$ ethtool -e eth0 offset 0x08 length 6
+Offset      Values
+------      ------
+0x0008:     00 50 b6 33 c5 e5
+</code></pre>
+
+<p>Offset 0x08 seems to be correct, the output above shows exactly the current MAC address of the device.</p>
+
+<p>In order to write to the EEPROM, ethtool can be called as follows:</p>
+
+<p><code>$ ethtool -E eth0 magic &lt;N&gt; offset &lt;N&gt; value &lt;N&gt;</code></p>
+
+<p>As you can see, there is an additional command line argument, beginning with <code>magic</code>. This magic value is a vendor specific value that needs to be added to the command in order to write to the EEPROM. This value should prevent accidental writes to the EEPROM. For Asix devices the value can be obtained from the Linux kernel source code (see <a href="https://github.com/torvalds/linux/blob/master/drivers/net/usb/asix.h">asix.h</a>):</p>
+
+<pre><code>...
+#define AX_EEPROM_MAGIC 0xdeadbeef
+...
+</code></pre>
+
+<p>Now we know the magic value and can fire off some commands:</p>
+
+<pre><code>$ ethtool -E eth0 magic 0xdeadbeef offset 0x08 value 0x00
+$ ethtool -E eth0 magic 0xdeadbeef offset 0x09 value 0x11
+$ ethtool -E eth0 magic 0xdeadbeef offset 0x0a value 0x22
+$ ethtool -E eth0 magic 0xdeadbeef offset 0x0b value 0x33
+$ ethtool -E eth0 magic 0xdeadbeef offset 0x0c value 0x44
+$ ethtool -E eth0 magic 0xdeadbeef offset 0x0d value 0x55
+</code></pre>
+
+<p>Afterwards ethtool is invoked again to see whether all values were written correctly:</p>
+
+<pre><code>$ ethtool -e eth0 offset 0x08 length 6
+Offset      Values
+------      ------
+0x0008:     00 11 22 33 44 55
+</code></pre>
+
+<p>It seems that all values are written correctly.
+Now let&rsquo;s check the output of <code>ip</code> after unplugging the USB-to-Ethernet adapter and plugging it back in:</p>
+
+<pre><code>$ ip a show dev eth0
+10: eth0: &lt;NO-CARRIER,BROADCAST,MULTICAST,UP&gt; mtu 1500 qdisc fq_codel state DOWN group default qlen 1000
+    link/ether 00:11:22:33:44:55 brd ff:ff:ff:ff:ff:ff
+</code></pre>
+
+<p>Excellent! The MAC address has permanently changed; check this on another computer as well and you will see that the MAC address is now stored within the device&rsquo;s EEPROM and not just within the memory of the operating system.</p>
+
+<p>Sometimes the EEPROM of Ethernet devices could contain a checksum that needs to be adjusted after changing the MAC address. If you want to change your hardware address, check the according manual before and take care that you have a proper backup available if something goes wrong.</p>
+
+<p>Have fun</p>
+
+    </section>
+    <footer class="post-footer">
+      
+    </footer>
+  </article>
+</main>
+
+        <footer class="site-footer">
+  <section class="rss"><a class="subscribe-button icon-feed" href="/index.xml"></a></section>
+  <section class="twitter"><a class="icon-twitter" href="https://twitter.com/_bka_"> _bka_</a></section>
+  
+  <section class="copyright">&copy; 2018 </section>
+  <section class="poweredby"><a href="http://thedarkroast.com/arabica">Arabica</a> theme by Sean Lunsford. Published with <a href="https://gohugo.io">Hugo</a>.</section>
+</footer>
+
+
+
+    </body>
+</html>
