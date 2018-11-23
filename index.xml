@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title></title>
+    <link>https://github.com//</link>
+    <description>Recent content on </description>
+    <generator>Hugo -- gohugo.io</generator>
+    <lastBuildDate>Fri, 23 Nov 2018 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="https://github.com//index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>How to permanently change a MAC address using ethtool</title>
+      <link>https://github.com//post/how-to-permanently-set-a-mac-address-using-ethtool/</link>
+      <pubDate>Fri, 23 Nov 2018 00:00:00 +0000</pubDate>
+      
+      <guid>https://github.com//post/how-to-permanently-set-a-mac-address-using-ethtool/</guid>
+      <description>Changing the MAC address of a network interface can be a common task if you either change addresses for privacy reasons or if you&amp;rsquo;re performing security assessments.
+If you&amp;rsquo;re using a Linux-based operating system, this can be done using one of the following commands:
+ifconfig eth0 hw ether xx:xx:xx:xx:xx:xx
+macchanger-ng --mac xx:xx:xx:xx:xx:xx eth0
+ip link set eth0 address xx:xx:xx:xx:xx:xx
+While these changes are only temporary, it&amp;rsquo;s also possible to instruct the operating system to set the MAC address straight after booting, for example by modifying files like /etc/network/interfaces.</description>
+    </item>
+    
+    <item>
+      <title>About</title>
+      <link>https://github.com//about/</link>
+      <pubDate>Fri, 23 Nov 2018 00:00:00 +0000</pubDate>
+      
+      <guid>https://github.com//about/</guid>
+      <description>Hi all, here I&amp;rsquo;ll write about IT-Sec and in-depth technical stuff in general.
+If you want to get in touch contact me via Twitter: bka.</description>
+    </item>
+    
+  </channel>
+</rss>
