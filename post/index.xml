@@ -5,10 +5,23 @@
     <link>https://github.com//post/</link>
     <description>Recent content in Posts on </description>
     <generator>Hugo -- gohugo.io</generator>
-    <lastBuildDate>Fri, 23 Nov 2018 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sat, 30 Nov 2019 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="https://github.com//post/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Network Security Implications of Host Models</title>
+      <link>https://github.com//post/network-security-implications-of-host-models/</link>
+      <pubDate>Sat, 30 Nov 2019 00:00:00 +0000</pubDate>
+      
+      <guid>https://github.com//post/network-security-implications-of-host-models/</guid>
+      <description>This blog post is about a concept in network stacks called &amp;ldquo;Host Model&amp;rdquo; and its implications on network security.
+It is important for both, the offensive and the defensive side to know the differences between the host model paradigms and to be aware of the defaults that are used in common operating systems.
+In this blog post the following 2 hosts will be considered:
+Host A
+eth0 IPv4 address: 192.</description>
+    </item>
     
     <item>
       <title>How to permanently change a MAC address using ethtool</title>
