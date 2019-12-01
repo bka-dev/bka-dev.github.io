@@ -1,49 +1,49 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>blog.kanbach.org</title>
-    <link>https://github.com//</link>
+    <link>https://blog.kanbach.org/</link>
     <description>Recent content on blog.kanbach.org</description>
     <generator>Hugo -- gohugo.io</generator>
     <lastBuildDate>Sat, 30 Nov 2019 00:00:00 +0000</lastBuildDate>
     
-	<atom:link href="https://github.com//index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://blog.kanbach.org/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>Network Security Implications of Host Models</title>
-      <link>https://github.com//post/network-security-implications-of-host-models/</link>
+      <link>https://blog.kanbach.org/post/network-security-implications-of-host-models/</link>
       <pubDate>Sat, 30 Nov 2019 00:00:00 +0000</pubDate>
       
-      <guid>https://github.com//post/network-security-implications-of-host-models/</guid>
+      <guid>https://blog.kanbach.org/post/network-security-implications-of-host-models/</guid>
       <description>This blog post is about a concept in network stacks called &amp;ldquo;Host Model&amp;rdquo; and its implications on network security.
 It is important for both, the offensive and the defensive side to know the differences between the host model paradigms and to be aware of the defaults that are used in common operating systems.
 In this blog post the following 2 hosts will be considered:
 Host A
-eth0 IPv4 address: 192.</description>
+eth0 IPv4 address: 192.168.100.1/24 MAC: 00:0C:29:6D:57:01 eth1 IPv4 Address: 10.</description>
     </item>
     
     <item>
       <title>How to permanently change a MAC address using ethtool</title>
-      <link>https://github.com//post/how-to-permanently-change-a-mac-address-using-ethtool/</link>
+      <link>https://blog.kanbach.org/post/how-to-permanently-change-a-mac-address-using-ethtool/</link>
       <pubDate>Fri, 23 Nov 2018 00:00:00 +0000</pubDate>
       
-      <guid>https://github.com//post/how-to-permanently-change-a-mac-address-using-ethtool/</guid>
-      <description>Changing the MAC address of a network interface can be a common task if you either change addresses for privacy reasons or if you&amp;rsquo;re performing security assessments.
-If you&amp;rsquo;re using a Linux-based operating system, this can be done using one of the following commands:
+      <guid>https://blog.kanbach.org/post/how-to-permanently-change-a-mac-address-using-ethtool/</guid>
+      <description>Changing the MAC address of a network interface can be a common task if you either change addresses for privacy reasons or if you&#39;re performing security assessments.
+If you&#39;re using a Linux-based operating system, this can be done using one of the following commands:
 ifconfig eth0 hw ether xx:xx:xx:xx:xx:xx
 macchanger-ng --mac xx:xx:xx:xx:xx:xx eth0
 ip link set eth0 address xx:xx:xx:xx:xx:xx
-While these changes are only temporary, it&amp;rsquo;s also possible to instruct the operating system to set the MAC address straight after booting, for example by modifying files like /etc/network/interfaces.</description>
+While these changes are only temporary, it&#39;s also possible to instruct the operating system to set the MAC address straight after booting, for example by modifying files like /etc/network/interfaces.</description>
     </item>
     
     <item>
       <title>About</title>
-      <link>https://github.com//about/</link>
+      <link>https://blog.kanbach.org/about/</link>
       <pubDate>Fri, 23 Nov 2018 00:00:00 +0000</pubDate>
       
-      <guid>https://github.com//about/</guid>
-      <description>Hi all, here I&amp;rsquo;ll write about IT-Sec and in-depth technical stuff in general.
+      <guid>https://blog.kanbach.org/about/</guid>
+      <description>Hi all, here I&#39;ll write about IT-Sec and in-depth technical stuff in general.
 If you want to get in touch contact me via Twitter: bka.</description>
     </item>
     
