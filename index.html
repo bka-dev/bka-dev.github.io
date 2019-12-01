@@ -69,6 +69,10 @@
         
 	<main class="content" role="main">
     
+    
+      
+    
+    
     <div class="extra-pagination">
       
 
@@ -83,17 +87,44 @@
       <article class="post">
 	<header class="post-header">
     
-		<h2 class="post-title"><a href="/post/">Posts</a></h2>
+		<h2 class="post-title"><a href="/post/network-security-implications-of-host-models/">Network Security Implications of Host Models</a></h2>
 	</header>
 	<section class="post-excerpt">
     <p>
-       &hellip; <a class="read-more" href="/post/">&raquo;</a>
+      This blog post is about a concept in network stacks called &ldquo;Host Model&rdquo; and its implications on network security.
+It is important for both, the offensive and the defensive side to know the differences between the host model paradigms and to be aware of the defaults that are used in common operating systems.
+In this blog post the following 2 hosts will be considered:
+Host A
+eth0 IPv4 address: 192.168.100.1/24 MAC: 00:0C:29:6D:57:01 eth1 IPv4 Address: 10. &hellip; <a class="read-more" href="/post/network-security-implications-of-host-models/">&raquo;</a>
     </p>
 	</section>
 	<footer class="post-meta">
     <time class="post-date">2019-11-30</time>
 	</footer>
 </article>
+
+
+		
+      <article class="post">
+	<header class="post-header">
+    
+		<h2 class="post-title"><a href="/post/how-to-permanently-change-a-mac-address-using-ethtool/">How to permanently change a MAC address using ethtool</a></h2>
+	</header>
+	<section class="post-excerpt">
+    <p>
+      Changing the MAC address of a network interface can be a common task if you either change addresses for privacy reasons or if you're performing security assessments.
+If you're using a Linux-based operating system, this can be done using one of the following commands:
+ifconfig eth0 hw ether xx:xx:xx:xx:xx:xx
+macchanger-ng --mac xx:xx:xx:xx:xx:xx eth0
+ip link set eth0 address xx:xx:xx:xx:xx:xx
+While these changes are only temporary, it's also possible to instruct the operating system to set the MAC address straight after booting, for example by modifying files like /etc/network/interfaces. &hellip; <a class="read-more" href="/post/how-to-permanently-change-a-mac-address-using-ethtool/">&raquo;</a>
+    </p>
+	</section>
+	<footer class="post-meta">
+    <time class="post-date">2018-11-23</time>
+	</footer>
+</article>
+
 
 		
     
