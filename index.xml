@@ -5,10 +5,20 @@
     <link>https://blog.kanbach.org/</link>
     <description>Recent content on blog.kanbach.org</description>
     <generator>Hugo -- gohugo.io</generator>
-    <lastBuildDate>Sat, 30 Nov 2019 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 07 Aug 2022 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="https://blog.kanbach.org/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Escaping from Mozilla Firefox in Restricted Environments</title>
+      <link>https://blog.kanbach.org/post/escaping-from-mozilla-firefox-in-restricted-environments/</link>
+      <pubDate>Sun, 07 Aug 2022 00:00:00 +0000</pubDate>
+      
+      <guid>https://blog.kanbach.org/post/escaping-from-mozilla-firefox-in-restricted-environments/</guid>
+      <description>How to execute operating system commands by leveraging legitimate functions of Mozilla Firefox.
+Software environments in which users should only be able to perform a limited amount of tasks often use Kiosk applications to reduce the opportunities of a user to interact with the system. In many environments, only a few pre-defined applications are published to the user, like web browsers or POS software, depending on what the user needs to do.</description>
+    </item>
     
     <item>
       <title>Network Security Implications of Host Models</title>
