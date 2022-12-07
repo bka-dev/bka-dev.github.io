@@ -1,24 +1,26 @@
 <!DOCTYPE html>
 <html>
     <head>
+	<meta name="generator" content="Hugo 0.60.1" />
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
     
     <title>
       
-      About - blog.kanbach.org
+      blog.kanbach.org
       
 		</title>
 
     <meta name="HandheldFriendly" content="True" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://blog.kanbach.org/index.xml" rel="alternate" type="application/rss+xml" title="blog.kanbach.org" />
     <meta name="twitter:card" content="summary" />
 <meta name="twitter:site" content="blog.kanbach.org" />
 <meta name="twitter:creator" content="_bka_" />
-<meta property="og:url" content="https://blog.kanbach.org/about/" />
-<meta property="og:title" content="About" />
-<meta property="og:description" content=" IT-Security and stuff - About " />
+<meta property="og:url" content="https://blog.kanbach.org/" />
+<meta property="og:title" content="blog.kanbach.org" />
+<meta property="og:description" content=" IT-Security and stuff - blog.kanbach.org " />
 
     
     <link rel="stylesheet" type="text/css" href="/assets/css/normalize.css" />
@@ -39,7 +41,7 @@
     
 </head>
 
-    <body class="page-template">
+    <body class="">
         <header class="main-header">
 	<div class="main-header-content">
 		<h1 class="blog-title">
@@ -63,24 +65,64 @@
 		
       <a class="nav- " role="presentation" href="/post/network-security-implications-of-host-models/">Network Security Implications of Host Models</a>
 		
-      <a class="nav- nav-current" role="presentation" href="/about/">About</a>
+      <a class="nav- " role="presentation" href="/about/">About</a>
 		
 	</div>
 </header>
 
         
-<main class="content" role="main">
-  <article class="post page">
-    <header class="post-header">
-      <h2 class="post-title">About</h2>
-    </header>
-    <section class="post-content">
-      <p>Hi all, here I'll write about IT-Sec and in-depth technical stuff in general.</p>
-<p>If you want to get in touch contact me via Twitter: <a href="https://twitter.com/_bka_"><em>bka</em></a>.</p>
+	<main class="content" role="main">
+    
+    
+      
+    
+    
+    <div class="extra-pagination">
+      
 
-    </section>
-  </article>
-</main>
+<nav class="pagination" role="navigation">
+    
+        <a class="newer-posts" href="/">&larr; Newer Posts</a>
+    
+    <span class="page-number">Page 2 of 2</span>
+    
+</nav>
+
+    </div>
+		
+      <article class="post">
+	<header class="post-header">
+    
+		<h2 class="post-title"><a href="/post/how-to-permanently-change-a-mac-address-using-ethtool/">How to permanently change a MAC address using ethtool</a></h2>
+	</header>
+	<section class="post-excerpt">
+    <p>
+      Changing the MAC address of a network interface can be a common task if you either change addresses for privacy reasons or if you're performing security assessments.
+If you're using a Linux-based operating system, this can be done using one of the following commands:
+ifconfig eth0 hw ether xx:xx:xx:xx:xx:xx
+macchanger-ng --mac xx:xx:xx:xx:xx:xx eth0
+ip link set eth0 address xx:xx:xx:xx:xx:xx
+While these changes are only temporary, it's also possible to instruct the operating system to set the MAC address straight after booting, for example by modifying files like /etc/network/interfaces. &hellip; <a class="read-more" href="/post/how-to-permanently-change-a-mac-address-using-ethtool/">&raquo;</a>
+    </p>
+	</section>
+	<footer class="post-meta">
+    <time class="post-date">2018-11-23</time>
+	</footer>
+</article>
+
+
+		
+    
+
+<nav class="pagination" role="navigation">
+    
+        <a class="newer-posts" href="/">&larr; Newer Posts</a>
+    
+    <span class="page-number">Page 2 of 2</span>
+    
+</nav>
+
+	</main>
 
         <footer class="site-footer">
   <section class="rss"><a class="subscribe-button icon-feed" href="/index.xml"></a></section>

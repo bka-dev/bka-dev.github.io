@@ -5,10 +5,20 @@
     <link>https://blog.kanbach.org/post/</link>
     <description>Recent content in Posts on blog.kanbach.org</description>
     <generator>Hugo -- gohugo.io</generator>
-    <lastBuildDate>Sun, 07 Aug 2022 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 07 Dec 2022 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="https://blog.kanbach.org/post/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Firewalls under the hood - UFW</title>
+      <link>https://blog.kanbach.org/post/firewalls-under-the-hood-ufw/</link>
+      <pubDate>Wed, 07 Dec 2022 00:00:00 +0000</pubDate>
+      
+      <guid>https://blog.kanbach.org/post/firewalls-under-the-hood-ufw/</guid>
+      <description>Overview This blogpost aims to explain some of the inner workings of the &amp;ldquo;uncomplicated firewall&amp;rdquo; (ufw) that is available for Ubuntu installations since 8.04 LTS and for Debian installations since 10.
+Before going into detail, ufw is not a firewall but a frontend for iptables. Iptables is a frontend for the netfilter kernel module that is performing packet filtering within the Linux kernel. Therefore all actions that are performed via ufw can be directly queried using the iptables command.</description>
+    </item>
     
     <item>
       <title>Escaping from Mozilla Firefox in Restricted Environments</title>

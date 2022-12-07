@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    
+    <title>
+      
+      Firewalls under the hood - UFW - blog.kanbach.org
+      
+		</title>
+
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="twitter:card" content="summary" />
+<meta name="twitter:site" content="blog.kanbach.org" />
+<meta name="twitter:creator" content="_bka_" />
+<meta property="og:url" content="https://blog.kanbach.org/post/firewalls-under-the-hood-ufw/" />
+<meta property="og:title" content="Firewalls under the hood - UFW" />
+<meta property="og:description" content=" IT-Security and stuff - Firewalls under the hood - UFW " />
+
+    
+    <link rel="stylesheet" type="text/css" href="/assets/css/normalize.css" />
+    <link rel="stylesheet" type="text/css" href="/assets/css/icons.css" />
+    <link rel="stylesheet" type="text/css" href="/assets/css/screen.css" />
+    
+    <link href="https://fonts.loli.net/css?family=Bree+Serif|Lato:100,100i,300,300i,400,400i,700,700i|Source+Code+Pro:300,400,500,700" rel="stylesheet">
+    
+
+    
+    <script src="https://cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="/assets/bigfoot/dist/bigfoot.js"></script>
+    <link rel="stylesheet" type="text/css" href="/assets/bigfoot/dist/bigfoot-number.css" />
+    <script type="text/javascript">
+        $.bigfoot();
+    </script>
+    
+    
+</head>
+
+    <body class="post-template">
+        <header class="main-header">
+	<div class="main-header-content">
+		<h1 class="blog-title">
+			<a href="/">
+				
+           blog.kanbach.org
+				
+			</a>
+		</h1>
+		<h2 class="blog-description">IT-Security and stuff</h2>
+	</div>
+
+	<div class="nav">
+    
+		
+      <a class="nav- " role="presentation" href="/post/escaping-from-mozilla-firefox-in-restricted-environments/">Escaping from Mozilla Firefox in Restricted Environments</a>
+		
+      <a class="nav- nav-current" role="presentation" href="/post/firewalls-under-the-hood-ufw/">Firewalls under the hood - UFW</a>
+		
+      <a class="nav- " role="presentation" href="/post/how-to-permanently-change-a-mac-address-using-ethtool/">How to permanently change a MAC address using ethtool</a>
+		
+      <a class="nav- " role="presentation" href="/post/network-security-implications-of-host-models/">Network Security Implications of Host Models</a>
+		
+      <a class="nav- " role="presentation" href="/about/">About</a>
+		
+	</div>
+</header>
+
+        
+<main class="content" role="main">
+  <article class="post">
+    <header class="post-header">
+      
+      <h2 class="post-title">Firewalls under the hood - UFW</h2>
+      <section class="post-meta">
+        <time class="post-date">2022-12-07</time>
+      </section>
+    </header>
+    <section class="post-content">
+      <h2 id="overview">Overview</h2>
+<p>This blogpost aims to explain some of the inner workings of the &ldquo;uncomplicated firewall&rdquo; (ufw) that is available for Ubuntu installations since 8.04 LTS and for Debian installations since 10.</p>
+<p>Before going into detail, ufw is not a firewall but a frontend for iptables. Iptables is a frontend for the netfilter kernel module that is performing packet filtering within the Linux kernel. Therefore all actions that are performed via ufw can be directly queried using the iptables command.</p>
+<p>The following sections deal with the default rules that are added by ufw and describes possible implications of these rules. Furthermore some ways are shown how ufw firewalls could be detected.</p>
+<h2 id="default-rule-set-ipv4">Default rule set (IPv4)</h2>
+<p>The setup that is used in this article is based on a standard Linux kernel without any hardening measures and ufw version <code>0.36.1</code>, released on 19 September 2021.</p>
+<p>After enabling ufw with <code>ufw enable</code> let's use iptables to check what happened:</p>
+<pre><code>$ iptables -S
+
+-P INPUT DROP
+-P FORWARD DROP
+-P OUTPUT ACCEPT
+-N ufw-after-forward
+-N ufw-after-input
+-N ufw-after-logging-forward
+-N ufw-after-logging-input
+-N ufw-after-logging-output
+-N ufw-after-output
+-N ufw-before-forward
+-N ufw-before-input
+-N ufw-before-logging-forward
+-N ufw-before-logging-input
+-N ufw-before-logging-output
+-N ufw-before-output
+-N ufw-logging-allow
+-N ufw-logging-deny
+-N ufw-not-local
+-N ufw-reject-forward
+-N ufw-reject-input
+-N ufw-reject-output
+-N ufw-skip-to-policy-forward
+-N ufw-skip-to-policy-input
+-N ufw-skip-to-policy-output
+-N ufw-track-forward
+-N ufw-track-input
+-N ufw-track-output
+-N ufw-user-forward
+-N ufw-user-input
+-N ufw-user-limit
+-N ufw-user-limit-accept
+-N ufw-user-logging-forward
+-N ufw-user-logging-input
+-N ufw-user-logging-output
+-N ufw-user-output
+-A INPUT -j ufw-before-logging-input
+-A INPUT -j ufw-before-input
+-A INPUT -j ufw-after-input
+-A INPUT -j ufw-after-logging-input
+-A INPUT -j ufw-reject-input
+-A INPUT -j ufw-track-input
+-A FORWARD -j ufw-before-logging-forward
+-A FORWARD -j ufw-before-forward
+-A FORWARD -j ufw-after-forward
+-A FORWARD -j ufw-after-logging-forward
+-A FORWARD -j ufw-reject-forward
+-A FORWARD -j ufw-track-forward
+-A OUTPUT -j ufw-before-logging-output
+-A OUTPUT -j ufw-before-output
+-A OUTPUT -j ufw-after-output
+-A OUTPUT -j ufw-after-logging-output
+-A OUTPUT -j ufw-reject-output
+-A OUTPUT -j ufw-track-output
+-A ufw-after-input -p udp -m udp --dport 137 -j ufw-skip-to-policy-input
+-A ufw-after-input -p udp -m udp --dport 138 -j ufw-skip-to-policy-input
+-A ufw-after-input -p tcp -m tcp --dport 139 -j ufw-skip-to-policy-input
+-A ufw-after-input -p tcp -m tcp --dport 445 -j ufw-skip-to-policy-input
+-A ufw-after-input -p udp -m udp --dport 67 -j ufw-skip-to-policy-input
+-A ufw-after-input -p udp -m udp --dport 68 -j ufw-skip-to-policy-input
+-A ufw-after-input -m addrtype --dst-type BROADCAST -j ufw-skip-to-policy-input
+-A ufw-after-logging-forward -m limit --limit 3/min --limit-burst 10 -j LOG --log-prefix &quot;[UFW BLOCK] &quot;
+-A ufw-after-logging-input -m limit --limit 3/min --limit-burst 10 -j LOG --log-prefix &quot;[UFW BLOCK] &quot;
+-A ufw-before-forward -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A ufw-before-forward -p icmp -m icmp --icmp-type 3 -j ACCEPT
+-A ufw-before-forward -p icmp -m icmp --icmp-type 11 -j ACCEPT
+-A ufw-before-forward -p icmp -m icmp --icmp-type 12 -j ACCEPT
+-A ufw-before-forward -p icmp -m icmp --icmp-type 8 -j ACCEPT
+-A ufw-before-forward -j ufw-user-forward
+-A ufw-before-input -i lo -j ACCEPT
+-A ufw-before-input -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A ufw-before-input -m conntrack --ctstate INVALID -j ufw-logging-deny
+-A ufw-before-input -m conntrack --ctstate INVALID -j DROP
+-A ufw-before-input -p icmp -m icmp --icmp-type 3 -j ACCEPT
+-A ufw-before-input -p icmp -m icmp --icmp-type 11 -j ACCEPT
+-A ufw-before-input -p icmp -m icmp --icmp-type 12 -j ACCEPT
+-A ufw-before-input -p icmp -m icmp --icmp-type 8 -j ACCEPT
+-A ufw-before-input -p udp -m udp --sport 67 --dport 68 -j ACCEPT
+-A ufw-before-input -j ufw-not-local
+-A ufw-before-input -d 224.0.0.251/32 -p udp -m udp --dport 5353 -j ACCEPT
+-A ufw-before-input -d 239.255.255.250/32 -p udp -m udp --dport 1900 -j ACCEPT
+-A ufw-before-input -j ufw-user-input
+-A ufw-before-output -o lo -j ACCEPT
+-A ufw-before-output -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A ufw-before-output -j ufw-user-output
+-A ufw-logging-allow -m limit --limit 3/min --limit-burst 10 -j LOG --log-prefix &quot;[UFW ALLOW] &quot;
+-A ufw-logging-deny -m conntrack --ctstate INVALID -m limit --limit 3/min --limit-burst 10 -j RETURN
+-A ufw-logging-deny -m limit --limit 3/min --limit-burst 10 -j LOG --log-prefix &quot;[UFW BLOCK] &quot;
+-A ufw-not-local -m addrtype --dst-type LOCAL -j RETURN
+-A ufw-not-local -m addrtype --dst-type MULTICAST -j RETURN
+-A ufw-not-local -m addrtype --dst-type BROADCAST -j RETURN
+-A ufw-not-local -m limit --limit 3/min --limit-burst 10 -j ufw-logging-deny
+-A ufw-not-local -j DROP
+-A ufw-skip-to-policy-forward -j DROP
+-A ufw-skip-to-policy-input -j DROP
+-A ufw-skip-to-policy-output -j ACCEPT
+-A ufw-track-output -p tcp -m conntrack --ctstate NEW -j ACCEPT
+-A ufw-track-output -p udp -m conntrack --ctstate NEW -j ACCEPT
+-A ufw-user-limit -m limit --limit 3/min -j LOG --log-prefix &quot;[UFW LIMIT BLOCK] &quot;
+-A ufw-user-limit -j REJECT --reject-with icmp-port-unreachable
+-A ufw-user-limit-accept -j ACCEPT
+</code></pre>
+<p>The output above shows the <code>filter</code> table, as it was populated by ufw. It comprises several new chains like <code>ufw-after-forward</code>, <code>ufw-after-input</code> and many more and a set of rules that are appended to both the builtin and the custom chains.</p>
+<p>The listing above only shows the <code>filter</code> table. Besides <code>filter</code>, netfilter also uses the tables <code>raw</code>, <code>mangle</code>, <code>security</code> and <code>nat</code>, which however remain untouched.</p>
+<p>The <code>filter</code> table contains the builtin chains <code>INPUT</code>, <code>OUTPUT</code> and <code>FORWARD</code> and these chains are basically the ones that ufw is able to adjust.</p>
+<p>Let's first take a look at how incoming network traffic is handled:</p>
+<h2 id="input-handling-ipv4">Input handling (IPv4)</h2>
+<p>Every input that is destined to the host itself traverses the <code>INPUT</code> chain. This builtin netfilter chain is populated by ufw with a series of custom chains as shown in the overview image below:</p>
+<p><img src="/img/ufw-input.png" alt="Default ufw rules for incoming IPv4 packets" title="Default ufw rules for incoming IPv4 packets"></p>
+<p>The first configuration that can be seen in the image above is a <code>DROP</code> policy for incoming packets. This means that every packet that traverses the whole <code>INPUT</code> chain and doesn't match any configured rule would be discarded by the kernel.</p>
+<h3 id="ufwbeforelogginginput">ufw-before-logging-input</h3>
+<p>First, incoming packets are sent to the target <code>ufw-before-logging-input</code>, which doesn't contain any rules.</p>
+<h3 id="ufwbeforeinput">ufw-before-input</h3>
+<p>The next chain that incoming packets are sent to is <code>ufw-before-input</code> and a lot is happening there:</p>
+<pre><code>-i lo -j ACCEPT
+</code></pre>
+<p>This rule accepts all packets that arrive on interface <code>lo</code>. This rule is in place to ensure that applications on the machine could use local communication via <code> localnet</code>  (127.0.0.0/8).</p>
+<pre><code>-m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-m conntrack --ctstate INVALID -j ufw-logging-deny
+-m conntrack --ctstate INVALID -j DROP
+</code></pre>
+<p>These rules examine the state of the identified packets and call the <code> conntrack</code>  module for this. The first rule checks if the incoming packet is associated with the states <code>RELATED</code> or <code>ESTABLISHED</code>.</p>
+<p>The <code>ESTABLISHED</code> state refers to connections in which traffic is exchanged in both directions. For TCP this is the case once the three-way handshake is completed. In the case of UDP, datagrams are associated with an <code>ESTABLISHED</code> state, once the connection tuple <code>(src, dst, sport, dport)</code> is reversed.</p>
+<p>The <code>RELATED</code> state is a bit more complex. The state of a connection is <code>RELATED</code>, when there is a direct relation between a previous connection and the current one. The following example illustrates such a situation:</p>
+<p><img src="/img/icmp-type-3.png" alt="ICMP response is RELATED to UDP datagram" title="ICMP response is RELATED to UDP datagram"></p>
+<p>A UDP datagram with arbitrary content is sent to port 222 of a server that doesn't have any service listing on that port and does not filter it either. Due to the closed port, the server is rejecting the packet with an ICMP packet that has the type 3 (&ldquo;Destination unreachable&rdquo;) and code 3 (&ldquo;Port unreachable&rdquo;). Although the ICMP error is sent as a response to the UDP datagram, it is a dedicated connection. Since ICMP error messages are common responses they are considered <code>RELATED</code> to the previous connection.</p>
+<p>Besides ICMP there are a few protocols like FTP, SIP or H.323 that could initiate new connections in response to existing connections. FTP is a well known example, because it could initiate a dedicated connection to the ftp-data port 20, after requesting a file to download on port 21 (or whatever port the service is running on). Data connections from a FTP server are then considered <code>RELATED</code> to the original connection.</p>
+<p>In order to examine specific protocols, netfilter contains some helper modules like <code> nf_conntrack_ftp.ko</code> and  <code> nf_conntrack_sip.ko</code> , which when loaded, parse matching packets and set an <code>expect</code> flag, if specific sequences (like the <code>PORT</code> command for FTP) are discovered.</p>
+<p><code> Conntrack</code> helper modules pose a security risk, because they could inadvertently open other ports than the indended ones if not used correctly. [<a href="https://home.regit.org/netfilter-en/secure-use-of-helpers/">1</a>]</p>
+<p>In early kernel versions automatic helper assignment was enabled by default and it was not possible to disable this behaviour.</p>
+<p>For this purpose, Linux 3.5 introduced the following sysctl variable:</p>
+<pre><code>net.netfilter.nf_conntrack_helper
+</code></pre>
+<p>The default value for this sysctl was &ldquo;1&rdquo; until Linux 4.7. It changed to &ldquo;0&rdquo; afterwards. [<a href="https://github.com/torvalds/linux/commit/486dcf43da7815baa615822f3e46883ccca5400f">2</a>]</p>
+<pre><code>-m conntrack --ctstate INVALID -j ufw-logging-deny
+-m conntrack --ctstate INVALID -j DROP
+</code></pre>
+<p>These two rules track packets that are associated with an <code>INVALID</code> connection state. These packets, or more precisely, their connection state, is neither <code>NEW</code>, nor <code>ESTABLISHED</code> or <code>RELATED</code>. First, packets are sent to the  <code>ufw-logging-deny</code> chain, which contains the following rules:</p>
+<pre><code>-m conntrack --ctstate INVALID -m limit --limit 3/min --limit-burst 10 -j RETURN
+-m limit --limit 3/min --limit-burst 10 -j LOG --log-prefix &quot;[UFW BLOCK] &quot;
+</code></pre>
+<p>These two rules basically deal as a rate-limiting mechanism. Unless the rate of <code>INVALID</code> connections exceeds 3 connections per minute, packets are directly sent back to the previous chain. Otherwise packets are logged to syslog, with a prefix of <code>&quot;[UFW BLOCK] &quot;</code>.</p>
+<p>The second rule then drops packets associated with an <code>INVALID</code> connection state.</p>
+<pre><code>-A ufw-before-input -p icmp -m icmp --icmp-type 3 -j ACCEPT
+-A ufw-before-input -p icmp -m icmp --icmp-type 11 -j ACCEPT
+-A ufw-before-input -p icmp -m icmp --icmp-type 12 -j ACCEPT
+-A ufw-before-input -p icmp -m icmp --icmp-type 8 -j ACCEPT
+</code></pre>
+<p>These 4 rules deal with incoming ICMP messages and allow the following ICMP types:</p>
+<ul>
+<li>Type 3: <code>Destination unreachable</code></li>
+<li>Type 11: <code>Time exceeded</code></li>
+<li>Type 12: <code>Parameter problem</code></li>
+<li>Type 8: <code>Echo</code></li>
+</ul>
+<p>The next rule deals with DHCP traffic:</p>
+<pre><code>-A ufw-before-input -p udp -m udp --sport 67 --dport 68 -j ACCEPT
+</code></pre>
+<p>The rule above allows incoming UDP datagrams to port 68 (DHCP client), if they originate from UDP port 67 (DHCP server).</p>
+<pre><code>-A ufw-before-input -j ufw-not-local
+</code></pre>
+<p>The next line that is shown above sends packets to the <code>ufw-not-local</code> chain, that is shown below:</p>
+<pre><code>-A ufw-not-local -m addrtype --dst-type LOCAL -j RETURN
+-A ufw-not-local -m addrtype --dst-type MULTICAST -j RETURN
+-A ufw-not-local -m addrtype --dst-type BROADCAST -j RETURN
+-A ufw-not-local -m limit --limit 3/min --limit-burst 10 -j ufw-logging-deny
+-A ufw-not-local -j DROP
+</code></pre>
+<p>The first three rules above check incoming packets for their address type. The <code>LOCAL</code> address type does NOT correspond to localnet/localhost but refers to all addresses that are assigned to the host. Directed traffic that originates from other hosts will most likely match this address type.</p>
+<p>The <code>MULTICAST</code> and <code>BROADCAST</code> address types correspond to traffic sent to the special purpose multicast and broadcast addresses.</p>
+<p>Packets that match these three address types are returned to the previous chain. The remaining packets are first logged (if the rate exceeds 3 packets/min) and then discarded by the fifth rule.</p>
+<p>The next rule deals with <code>mDNS</code> traffic:</p>
+<pre><code>-A ufw-before-input -d 224.0.0.251/32 -p udp -m udp --dport 5353 -j ACCEPT
+</code></pre>
+<p>This rule accepts all incoming datagrams that are sent to the MDNS multicast address 224.0.0.251 with destination port 5353/UDP.</p>
+<p>The next rule deals with <code>UPnP/SSDP</code> traffic:</p>
+<pre><code>-A ufw-before-input -d 239.255.255.250/32 -p udp -m udp --dport 1900 -j ACCEPT
+</code></pre>
+<p>This rule accepts all incoming datagrams that are sent to the SSDP multicast address 239.255.255.250 with destination port 1900/UDP.</p>
+<p>What we have seen so far is a set of default rules that are always there - even if users haven't configured a single custom rule with ufw. Packets that were not already discarded or accepted by the kernel are now entering the netfilter chain that contains all rules that are manually added by using the ufw command line tool:</p>
+<pre><code>-A ufw-before-input -j ufw-user-input
+</code></pre>
+<p>When ufw is first initialized, this chain is empty. This means that even if users decide to configure <code>DROP</code> rules for <code>mDNS</code> or <code>SSDP</code> traffic via ufw, these datagrams are most likely accepted by the previous chains. For more information on this, check section <em>&ldquo;Fingerprinting systems that use ufw&rdquo;</em>.</p>
+<p>In order to add an allow rule via ufw, users could for example enter the following command:</p>
+<pre><code>ufw allow 22
+</code></pre>
+<p>If we take a look again at the <code>ufw-user-input</code> chain, the following rules appeared:</p>
+<pre><code>-A ufw-user-input -p tcp -m tcp --dport 22 -j ACCEPT
+-A ufw-user-input -p udp -m udp --dport 22 -j ACCEPT
+</code></pre>
+<p>Because no transport protocol like TCP or UDP was specified in the command, rules were added for both protocols.</p>
+<p>To allow a specific protocol it could be appended to the port number:</p>
+<pre><code>ufw allow 22/tcp
+</code></pre>
+<p>Another notable feature of ufw is the &ldquo;limit&rdquo; command. This is similar to the allow rule but combines it with rate-limiting. The following command adds a limit rule for port 22/TCP:</p>
+<pre><code>ufw limit 22/tcp
+</code></pre>
+<p>As with the <code>ufw allow</code> command, iptables is populating the <code>ufw-user-input</code>, <code>ufw-user-limit</code> and <code>ufw-user-limit-accept</code> chains behind the scenes with the following set of rules:</p>
+<pre><code>-A ufw-user-input -p tcp -m tcp --dport 22 -m conntrack --ctstate NEW -m recent --set --name DEFAULT --mask 255.255.255.255 --rsource 
+-A ufw-user-input -p tcp -m tcp --dport 22 -m conntrack --ctstate NEW -m recent --update --seconds 30 --hitcount 6 --name DEFAULT --mask 255.255.255.255 --rsource -j ufw-user-limit
+-A ufw-user-input -p tcp -m tcp --dport 22 -j ufw-user-limit-accept
+-A ufw-user-limit -j REJECT --reject-with icmp-port-unreachable
+-A ufw-user-limit-accept -j ACCEPT
+</code></pre>
+<p>These rules are more complex and use many different parameters.</p>
+<p>The first rule uses the <code>conntrack</code> module to match <code>NEW</code> connections. Furthermore the module <code>recent</code> is loaded that is able to track senders or receivers over time. To achieve this, a new entry is added with the <code>--set</code> option and associated with the name <code>DEFAULT</code>.</p>
+<p>All entries that are added by the <code>recent</code> module could be read from <code>/proc/net/xt_recent/</code> and in this particular case <code>/proc/net/xt_recent/DEFAULT</code>. The first rule also specifies the option <code>--rsource</code> that stores the source IP address of the incoming packet and the option <code>--mask 255.255.255.255</code> ensures that only this single IP address is stored, rather than a larger subnet. Think of it as something like <code>&lt;ipaddress&gt;/32</code>.</p>
+<p>A sample entry in <code>/proc/net/xt_recent/DEFAULT</code> might look like this:</p>
+<pre><code>src=192.168.0.120 ttl: 41 last_seen: 4330647135 oldest_pkt: 2 4330398367, 4330647135
+</code></pre>
+<p>The entry starts with the source address of the incoming packet, as specified in the first rule. In addition to that the <code>recent</code> module also keeps track of the ttl value and when the most recent packet that matched the rule appeared. The entry also contains the number of matching packets, along with the timestamps.</p>
+<p>The second rule in the list above defines very specific matches. Like the first rule, it matches <code>NEW</code> connections and then calls the <code>recent</code> module. As opposed to the first rule it then continues with <code>--update</code> to operate on an existing entry within the <code>xr_recent</code> list. The parameter <code>--seconds 30</code> adds a sliding window of 30 seconds and the parameter <code>--hitcount 6</code> ensures that the rule only matches, when 6 packets arrived. Chained together, this rule matches if 6 packets, each not older than 30 seconds, are identified that are sent by the source address stored in the entry. If that is the case, the packets are sent to the <code>ufw-user-limit</code> chain. Packets that don't hit these thresholds are sent to the <code>ufw-user-limit-accept</code> chain.</p>
+<p>The <code>ufw-user-limit</code> chain  immediately instructs the kernel to discard all packets and respond with an ICMP error message that has the type <code>Destination Unreachable</code> and code <code>Port Unreachable</code>. The chain <code>ufw-user-limit-accept</code> directly accepts all packets.</p>
+<p>Summarized, the <code>ufw limit</code> command allows access to ports and adds rate-limiting based on 6 hits within the past 30 seconds.</p>
+<h3 id="ufwafterinput">ufw-after-input</h3>
+<p>After user-defined rules were processed the remaining packets are sent to the <code>ufw-after-input</code> chain that is shown below.</p>
+<pre><code>-A ufw-after-input -p udp -m udp --dport 137 -j ufw-skip-to-policy-input
+-A ufw-after-input -p udp -m udp --dport 138 -j ufw-skip-to-policy-input
+-A ufw-after-input -p tcp -m tcp --dport 139 -j ufw-skip-to-policy-input
+-A ufw-after-input -p tcp -m tcp --dport 445 -j ufw-skip-to-policy-input
+-A ufw-after-input -p udp -m udp --dport 67 -j ufw-skip-to-policy-input
+-A ufw-after-input -p udp -m udp --dport 68 -j ufw-skip-to-policy-input
+-A ufw-after-input -m addrtype --dst-type BROADCAST -j ufw-skip-to-policy-input
+</code></pre>
+<p>These rules match TCP packets, with destination ports 139 and 445, UDP datagrams with destination ports 137,138, 67 and 68 and traffic with address type <code>BROADCAST</code> and moves them to the <code>ufw-skip-to-policy-input</code> chain, which in this (default) scenario comprises only one rule:</p>
+<pre><code>-j DROP
+</code></pre>
+<p>If the default policy for <code>INPUT</code> would be changed to <code>ACCEPT</code>, this rule would change to <code>-j ACCEPT</code> as well.</p>
+<p>This is an interesting set of rules as the 6th rule would effectively block UDP datagrams with destination port 68, although they were already accepted in <code>ufw-before-input</code> and thus never reach this rule.</p>
+<h3 id="ufwafterlogginginput">ufw-after-logging-input</h3>
+<p>Packets or datagrams that were neither accepted nor dropped/rejected so far are now traversing the <code>ufw-after-logging-input</code> chain that containins the following rule:</p>
+<pre><code>-m limit --limit 3/min --limit-burst 10 -j LOG --log-prefix &quot;[UFW BLOCK] &quot;
+</code></pre>
+<p>We've seen a rule like this before and it simply logs everything that exceeds the limit of 3 packets per minute.</p>
+<h3 id="ufwrejectinput--ufwtrackinput">ufw-reject-input &amp; ufw-track-input</h3>
+<p>Packets are then entering the chains <code>ufw-reject-input</code> and <code>ufw-track-input</code> which however are both empty.</p>
+<p>All remaining packets are now dropped, according to the default <code>DROP</code> rule.</p>
+<h2 id="output-handling-ipv4">Output handling (IPv4)</h2>
+<p>Packets and datagrams that are going to be sent out are traversing the builtin <code>OUTPUT</code> chain. Like the <code>INPUT</code> chain ufw populates it with some custom ufw chains as shown below:</p>
+<p><img src="/img/ufw-output.png" alt="Default ufw rules for outgoing IPv4 packets" title="Default ufw rules for outgoing IPv4 packets"></p>
+<p>As opposed to the <code>INPUT</code> chain, the default policy of the <code>OUTPUT</code> chain is <code>ACCEPT</code>.</p>
+<h3 id="ufwbeforeloggingoutput">ufw-before-logging-output</h3>
+<p>After entering the <code>INPUT</code> chain, traffic is entering the <code>ufw-before-logging-output</code> chain that does not contain any entries.</p>
+<h3 id="ufwbeforeoutput">ufw-before-output</h3>
+<p>Afterwards the <code>ufw-before-output</code> chain that includes the following rules is traversed:</p>
+<pre><code>-o lo -j ACCEPT
+-m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-j ufw-user-output
+</code></pre>
+<p>The first two rules look familiar and accept packets destined to the <code>lo</code> interface and connections that are either in the <code>ESTABLISHED</code> or <code>RELATED</code> state.</p>
+<p>Afterwards the <code>ufw-user-output</code> chain is entered that is empty by default. User-generated rules that are created with the ufw CLI are written to this chain and processed accordingly.</p>
+<h3 id="ufwafteroutput--ufwafterloggingoutput--ufwrejectoutput">ufw-after-output &amp; ufw-after-logging-output &amp; ufw-reject-output</h3>
+<p>Afterwards the remaining packets are passing the <code>ufw-after-output</code>, <code>ufw-after-logging-output</code> and <code>ufw-reject-output</code> chains that are all empty.</p>
+<h3 id="ufwtrackoutput">ufw-track-output</h3>
+<p>The final chain <code>ufw-track-output</code> contains the following rules:</p>
+<pre><code>-p tcp -m conntrack --ctstate NEW -j ACCEPT
+-p udp -m conntrack --ctstate NEW -j ACCEPT
+</code></pre>
+<p>These rules accept <code>NEW</code> TCP and UDP connections. While TCP-SYN packets or initial UDP datagrams count as <code>NEW</code>, there are scenarios where also <code>TCP-ACK</code> packets could be regarded as <code>NEW</code>. This behaviour is described in section <em>&ldquo;Fingerprinting systems that use ufw&rdquo;</em>.</p>
+<p>All remaining packets are accepted by default, as per the default policy.</p>
+<p>It can be concluded that all outgoing packets are allowed by default.</p>
+<h2 id="forward-handling-ipv4">Forward handling (IPv4)</h2>
+<p>If the system running ufw is not the destination or origin of network traffic, packets are likely forwarded and therefore traversing the builtin <code>FORWARD</code> chain.</p>
+<p>An overview of the default configuration by ufw is shown below:</p>
+<p><img src="/img/ufw-forward.png" alt="Default ufw rules for forwarded IPv4 packets" title="Default ufw rules for forwarded IPv4 packets"></p>
+<p>The default policy for the <code>FORWARD</code> chain is <code>DROP</code>.</p>
+<h3 id="ufwbeforeloggingforward">ufw-before-logging-forward</h3>
+<p>The first custom chain to be entered is <code>ufw-before-logging-forward</code> which does not contain
+any entries.</p>
+<h3 id="ufwbeforeforward">ufw-before-forward</h3>
+<p>Next, the <code>ufw-before-forward</code> is traversed that contains the following rules:</p>
+<pre><code>-m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-p icmp -m icmp --icmp-type 3 -j ACCEPT
+-p icmp -m icmp --icmp-type 11 -j ACCEPT
+-p icmp -m icmp --icmp-type 12 -j ACCEPT
+-p icmp -m icmp --icmp-type 8 -j ACCEPT
+-j ufw-user-forward
+</code></pre>
+<p>The first rule accepts packets associated with an <code>ESTABLISHED</code> or <code>RELATED</code> connection. We've already seen this rule for incoming and outgoing packets.</p>
+<p>The next four rules accept ICMP packets with ICMP types 3, 11, 12 and 8. These are the same ICMP types as we've seen in the <code>INPUT</code> chain:</p>
+<ul>
+<li>Type 3: <code>Destination unreachable</code></li>
+<li>Type 11: <code>Time exceeded</code></li>
+<li>Type 12: <code>Parameter problem</code></li>
+<li>Type 8: <code>Echo</code></li>
+</ul>
+<p>Eventually packets are entering the <code>ufw-user-forward</code> chain that contains user-defined rules and is empty by default.</p>
+<h3 id="ufwafterforward">ufw-after-forward</h3>
+<p>The next chain that is traversed is <code>ufw-after-forward</code> and in the default configuration is empty.</p>
+<h3 id="ufwafterloggingforward">ufw-after-logging-forward</h3>
+<p>Within the <code>ufw-after-logging-forward</code> chain, a single rule exists:</p>
+<pre><code>-m limit --limit 3/min --limit-burst 10 -j LOG --log-prefix &quot;[UFW BLOCK] &quot;
+</code></pre>
+<p>This rule looks familiar and is logging all packets that exceed a rate of 3/min to syslog.</p>
+<h3 id="ufwrejectforward--ufwtrackforward">ufw-reject-forward &amp; ufw-track-forward</h3>
+<p>The next chains <code>ufw-reject-forward</code> and <code>ufw-track-forward</code> are both empty.</p>
+<p>At this stage, all remaining packets are discarded, due to the default <code>DROP</code> policy.</p>
+<h2 id="default-rule-set-ipv6">Default rule set (IPv6)</h2>
+<p>When enabling ufw, not only IPv4 rules are generated but also a large set of IPv6 related rules that can be queried using ip6tables:</p>
+<pre><code>-P INPUT DROP
+-P FORWARD DROP
+-P OUTPUT ACCEPT
+-N ufw6-after-forward
+-N ufw6-after-input
+-N ufw6-after-logging-forward
+-N ufw6-after-logging-input
+-N ufw6-after-logging-output
+-N ufw6-after-output
+-N ufw6-before-forward
+-N ufw6-before-input
+-N ufw6-before-logging-forward
+-N ufw6-before-logging-input
+-N ufw6-before-logging-output
+-N ufw6-before-output
+-N ufw6-logging-allow
+-N ufw6-logging-deny
+-N ufw6-reject-forward
+-N ufw6-reject-input
+-N ufw6-reject-output
+-N ufw6-skip-to-policy-forward
+-N ufw6-skip-to-policy-input
+-N ufw6-skip-to-policy-output
+-N ufw6-track-forward
+-N ufw6-track-input
+-N ufw6-track-output
+-N ufw6-user-forward
+-N ufw6-user-input
+-N ufw6-user-limit
+-N ufw6-user-limit-accept
+-N ufw6-user-logging-forward
+-N ufw6-user-logging-input
+-N ufw6-user-logging-output
+-N ufw6-user-output
+-A INPUT -j ufw6-before-logging-input
+-A INPUT -j ufw6-before-input
+-A INPUT -j ufw6-after-input
+-A INPUT -j ufw6-after-logging-input
+-A INPUT -j ufw6-reject-input
+-A INPUT -j ufw6-track-input
+-A FORWARD -j ufw6-before-logging-forward
+-A FORWARD -j ufw6-before-forward
+-A FORWARD -j ufw6-after-forward
+-A FORWARD -j ufw6-after-logging-forward
+-A FORWARD -j ufw6-reject-forward
+-A FORWARD -j ufw6-track-forward
+-A OUTPUT -j ufw6-before-logging-output
+-A OUTPUT -j ufw6-before-output
+-A OUTPUT -j ufw6-after-output
+-A OUTPUT -j ufw6-after-logging-output
+-A OUTPUT -j ufw6-reject-output
+-A OUTPUT -j ufw6-track-output
+-A ufw6-after-input -p udp -m udp --dport 137 -j ufw6-skip-to-policy-input
+-A ufw6-after-input -p udp -m udp --dport 138 -j ufw6-skip-to-policy-input
+-A ufw6-after-input -p tcp -m tcp --dport 139 -j ufw6-skip-to-policy-input
+-A ufw6-after-input -p tcp -m tcp --dport 445 -j ufw6-skip-to-policy-input
+-A ufw6-after-input -p udp -m udp --dport 546 -j ufw6-skip-to-policy-input
+-A ufw6-after-input -p udp -m udp --dport 547 -j ufw6-skip-to-policy-input
+-A ufw6-after-logging-forward -m limit --limit 3/min --limit-burst 10 -j LOG --log-prefix &quot;[UFW BLOCK] &quot;
+-A ufw6-after-logging-input -m limit --limit 3/min --limit-burst 10 -j LOG --log-prefix &quot;[UFW BLOCK] &quot;
+-A ufw6-before-forward -m rt --rt-type 0 -j DROP
+-A ufw6-before-forward -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A ufw6-before-forward -p ipv6-icmp -m icmp6 --icmpv6-type 1 -j ACCEPT
+-A ufw6-before-forward -p ipv6-icmp -m icmp6 --icmpv6-type 2 -j ACCEPT
+-A ufw6-before-forward -p ipv6-icmp -m icmp6 --icmpv6-type 3 -j ACCEPT
+-A ufw6-before-forward -p ipv6-icmp -m icmp6 --icmpv6-type 4 -j ACCEPT
+-A ufw6-before-forward -p ipv6-icmp -m icmp6 --icmpv6-type 128 -j ACCEPT
+-A ufw6-before-forward -p ipv6-icmp -m icmp6 --icmpv6-type 129 -j ACCEPT
+-A ufw6-before-forward -j ufw6-user-forward
+-A ufw6-before-input -i lo -j ACCEPT
+-A ufw6-before-input -m rt --rt-type 0 -j DROP
+-A ufw6-before-input -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 129 -j ACCEPT
+-A ufw6-before-input -m conntrack --ctstate INVALID -j ufw6-logging-deny
+-A ufw6-before-input -m conntrack --ctstate INVALID -j DROP
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 1 -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 2 -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 3 -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 4 -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 128 -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 133 -m hl --hl-eq 255 -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 134 -m hl --hl-eq 255 -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 135 -m hl --hl-eq 255 -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 136 -m hl --hl-eq 255 -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 141 -m hl --hl-eq 255 -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 142 -m hl --hl-eq 255 -j ACCEPT
+-A ufw6-before-input -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 130 -j ACCEPT
+-A ufw6-before-input -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 131 -j ACCEPT
+-A ufw6-before-input -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 132 -j ACCEPT
+-A ufw6-before-input -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 143 -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 148 -m hl --hl-eq 255 -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 149 -m hl --hl-eq 255 -j ACCEPT
+-A ufw6-before-input -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 151 -m hl --hl-eq 1 -j ACCEPT
+-A ufw6-before-input -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 152 -m hl --hl-eq 1 -j ACCEPT
+-A ufw6-before-input -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 153 -m hl --hl-eq 1 -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 144 -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 145 -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 146 -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 147 -j ACCEPT
+-A ufw6-before-input -s fe80::/10 -d fe80::/10 -p udp -m udp --sport 547 --dport 546 -j ACCEPT
+-A ufw6-before-input -d ff02::fb/128 -p udp -m udp --dport 5353 -j ACCEPT
+-A ufw6-before-input -d ff02::f/128 -p udp -m udp --dport 1900 -j ACCEPT
+-A ufw6-before-input -j ufw6-user-input
+-A ufw6-before-output -o lo -j ACCEPT
+-A ufw6-before-output -m rt --rt-type 0 -j DROP
+-A ufw6-before-output -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A ufw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 1 -j ACCEPT
+-A ufw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 2 -j ACCEPT
+-A ufw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 3 -j ACCEPT
+-A ufw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 4 -j ACCEPT
+-A ufw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 128 -j ACCEPT
+-A ufw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 129 -j ACCEPT
+-A ufw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 133 -m hl --hl-eq 255 -j ACCEPT
+-A ufw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 136 -m hl --hl-eq 255 -j ACCEPT
+-A ufw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 135 -m hl --hl-eq 255 -j ACCEPT
+-A ufw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 134 -m hl --hl-eq 255 -j ACCEPT
+-A ufw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 141 -m hl --hl-eq 255 -j ACCEPT
+-A ufw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 142 -m hl --hl-eq 255 -j ACCEPT
+-A ufw6-before-output -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 130 -j ACCEPT
+-A ufw6-before-output -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 131 -j ACCEPT
+-A ufw6-before-output -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 132 -j ACCEPT
+-A ufw6-before-output -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 143 -j ACCEPT
+-A ufw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 148 -m hl --hl-eq 255 -j ACCEPT
+-A ufw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 149 -m hl --hl-eq 255 -j ACCEPT
+-A ufw6-before-output -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 151 -m hl --hl-eq 1 -j ACCEPT
+-A ufw6-before-output -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 152 -m hl --hl-eq 1 -j ACCEPT
+-A ufw6-before-output -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 153 -m hl --hl-eq 1 -j ACCEPT
+-A ufw6-before-output -j ufw6-user-output
+-A ufw6-logging-allow -m limit --limit 3/min --limit-burst 10 -j LOG --log-prefix &quot;[UFW ALLOW] &quot;
+-A ufw6-logging-deny -m conntrack --ctstate INVALID -m limit --limit 3/min --limit-burst 10 -j RETURN
+-A ufw6-logging-deny -m limit --limit 3/min --limit-burst 10 -j LOG --log-prefix &quot;[UFW BLOCK] &quot;
+-A ufw6-skip-to-policy-forward -j DROP
+-A ufw6-skip-to-policy-input -j DROP
+-A ufw6-skip-to-policy-output -j ACCEPT
+-A ufw6-track-output -p tcp -m conntrack --ctstate NEW -j ACCEPT
+-A ufw6-track-output -p udp -m conntrack --ctstate NEW -j ACCEPT
+-A ufw6-user-limit -m limit --limit 3/min -j LOG --log-prefix &quot;[UFW LIMIT BLOCK] &quot;
+</code></pre>
+<h2 id="input-handling-ipv6">Input handling (IPv6)</h2>
+<p>The builtin <code>INPUT</code> chain is populated with a set of rules that are shown in the following illustration:</p>
+<p><img src="/img/ufw-input-ipv6.png" alt="Default ufw rules for incoming IPv6 packets" title="Default ufw rules for incoming IPv6 packets"></p>
+<p>Like in the IPv4 examples, the ip6tables <code>INPUT</code> chain also has a default policy set to <code>DROP</code>.</p>
+<h3 id="ufw6beforelogginginput">ufw6-before-logging-input</h3>
+<p>The first chain <code>ufw6-before-logging-input</code> is empty.</p>
+<h3 id="ufw6beforeinput">ufw6-before-input</h3>
+<p>Next, the chain <code>ufw6-before-input</code> is entered that has a large set of pre-configured rules. These will be described step by step:</p>
+<pre><code>-i lo -j ACCEPT
+-m rt --rt-type 0 -j DROP
+</code></pre>
+<p>The first rule accepts traffic destined to the <code>lo</code> interface. This allows local communication between applications.</p>
+<p>The second rule matches if a IPv6 <code>routing header</code> is found. A certain routing type (Type 0: <code>Source Routing</code>) exists that was deprecated as per RFC-5095, due to its security risks. [<a href="https://www.ietf.org/rfc/rfc5095.txt">3</a>]
+This header is comparable to the <code>source routing</code> option in IPv4 that could be used to partly or completely control the route that packets take through networks. Firewall evasion attacks were way easier when <code>source routing</code> was allowed.</p>
+<pre><code>-m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-m conntrack --ctstate INVALID -j ufw6-logging-deny
+-m conntrack --ctstate INVALID -j DROP
+</code></pre>
+<p>The three rules above check the state of the connection, like in many previous examples. If the connection is either in a <code>RELATED</code> or <code>ESTABLISHED</code> state, the packets are accepted.</p>
+<p>Connections that are <code>INVALID</code> are dropped, but before that, they are sent to the <code>ufw6-logging-deny</code> chain that contains the following rules:</p>
+<pre><code>-m conntrack --ctstate INVALID -m limit --limit 3/min --limit-burst 10 -j RETURN
+-m limit --limit 3/min --limit-burst 10 -j LOG --log-prefix &quot;[UFW BLOCK] &quot;
+</code></pre>
+<p>This mechanism is identical to the IPv4 counterpart: Packets associated with an <code>INVALID</code> connection are sent back to the previous chain, unless the rate exceeds 3 packets per minute. Packets that hit the threshold are logged to syslog and leave the chain afterwards.</p>
+<p>Most of the following rules deal with ICMPv6 traffic. In order to provide a sufficient overview, some relevant ICMPv6 types are introduced:</p>
+<ul>
+<li>Type 1: <code>Destination unreachable</code></li>
+<li>Type 2: <code>Packet Too Big</code></li>
+<li>Type 3: <code>Time Exceeded</code></li>
+<li>Type 4: <code>Parameter Problem</code></li>
+<li>Type 128: <code>Echo Request</code></li>
+<li>Type 129: <code>Echo Reply</code></li>
+<li>Type 130: <code>Multicast Listener Query</code></li>
+<li>Type 131: <code>Multicast Listener Report</code></li>
+<li>Type 132: <code>Multicast Listener Done</code></li>
+<li>Type 133: <code>Router Solicitation</code></li>
+<li>Type 134: <code>Router Advertisement</code></li>
+<li>Type 135: <code>Neighbor Solicitation</code></li>
+<li>Type 136: <code>Neighbor Advertisement</code></li>
+<li>Type 141: <code>Inverse Neighbor Discovery</code></li>
+<li>Type 142: <code>Inverse Neighbor Discovery</code></li>
+<li>Type 143: <code>Version 2 Multicast Listener Report</code></li>
+<li>Type 144: <code>Home Agent Address Discovery Request Message</code></li>
+<li>Type 145: <code>Home Agent Address Discovery Reply Message</code></li>
+<li>Type 146: <code>Mobile Prefix Solicitation</code></li>
+<li>Type 147: <code>Mobile Prefix Advertisement</code></li>
+<li>Type 148: <code>Certification Path Solicitation Message</code></li>
+<li>Type 149: <code>Certification Path Advertisement Message</code></li>
+<li>Type 151: <code>Multicast Router Advertisement</code></li>
+<li>Type 152: <code>Multicast Router Solicitation</code></li>
+<li>Type 153: <code>Multicast Router Termination</code></li>
+</ul>
+<p>Now with this list in mind, let's take a look at some ICMPv6 rules:</p>
+<pre><code>-p ipv6-icmp -m icmp6 --icmpv6-type 129 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 1 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 2 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 3 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 4 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 128 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 144 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 145 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 146 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 147 -j ACCEPT
+</code></pre>
+<p>These rules accept ICMPv6 packets, that match the type specified in the rule. While some of the allowed types are used in error handling (<code>Destination unreachable</code>, <code>Time Exceeded</code>, etc.) there are also other types like <code>Echo Request</code> and <code>Echo Reply</code> that are accepted.</p>
+<p>Please note that all these rules are evaluated before the chain with user-defined rules is even traversed.</p>
+<p>The next few rules also deal with ICMPv6, but add some little details:</p>
+<pre><code>-p ipv6-icmp -m icmp6 --icmpv6-type 133 -m hl --hl-eq 255 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 134 -m hl --hl-eq 255 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 135 -m hl --hl-eq 255 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 136 -m hl --hl-eq 255 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 141 -m hl --hl-eq 255 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 142 -m hl --hl-eq 255 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 148 -m hl --hl-eq 255 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 149 -m hl --hl-eq 255 -j ACCEPT
+</code></pre>
+<p>These rules almost look like the previous ones, however they also contain the option <code>-m hl --hl-eq 255</code> which match if the <code>Hop Limit</code> field is present the IPv6 header and has a value of 255.</p>
+<p>So what does this value mean? The <code>Hop Limit</code> header in IPv6 is what the <code>TTL</code> header is in IPv4. It defines the maximum number of hops over which packets can be sent until they are dropped.</p>
+<p>Why is it set to 255 for these specific ICMPv6 types? The types in the rules above correspond to <code>Neighbour Discovery</code> and <code>Router Discovery</code> that happen <code>on the link</code> (compared to <code>ARP</code> in IPv4). A limit of 255 ensures, that off-link packets (which would have a hop limit of &lt; 255) are not allowed. This is specified in RFC-2461 section 3.1. [<a href="https://www.ietf.org/rfc/rfc2461.txt">4</a>]</p>
+<pre><code>-s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 130 -j ACCEPT
+-s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 131 -j ACCEPT
+-s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 132 -j ACCEPT
+-s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 143 -j ACCEPT
+</code></pre>
+<p>The next 4 rules above refer to <code>Multicast Listener</code> and <code>Version 2 Multicast Listener</code> packets. In these rules an additional source address range of <code>fe80::/10</code> is specified. This is the IP range reserved for IPv6 link-local addresses that are only valid on the link that the host is connected to. These rules ensure that no multicast traffic is accepted that originates from non-link-local addresses.</p>
+<pre><code>-s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 151 -m hl --hl-eq 1 -j ACCEPT
+-s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 152 -m hl --hl-eq 1 -j ACCEPT
+-s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 153 -m hl --hl-eq 1 -j ACCEPT
+</code></pre>
+<p>The rules above filter for ICMPv6 types <code>Multicast Router Advertisement</code>, <code>Multicast Router Solicitation</code> and <code>Multicast Router Termination</code>. In addition to that packets are only accepted, if the source address is a link-local address and the hop limit is 1. A hop limit of 1 ensures that packets can't travel beyond the link as described in RFC-2710 section 4. [<a href="https://www.ietf.org/rfc/rfc2710.txt">5</a>]</p>
+<pre><code>-s fe80::/10 -d fe80::/10 -p udp -m udp --sport 547 --dport 546 -j ACCEPT
+</code></pre>
+<p>The set of IPv4 rules for the <code>INPUT</code> chain included a rule to allow DHCP traffic. The same applies for IPv6 as shown in the rule above.</p>
+<p>It accepts packets that originate from and are sent to link-local addresses. Furthermore, it matches if the protocol is UDP, if the source port is equal to 547 (<code>DHCPv6 Server</code>), and if the destination port is equal to 546 (<code>DHCPv6 Client</code>).</p>
+<pre><code>-d ff02::fb/128 -p udp -m udp --dport 5353 -j ACCEPT
+</code></pre>
+<p>As IPv4 has a rule to allow <code>mDNS</code> traffic, the rule above allows <code>mDNS6</code>. The packet is accepted, if the destination address is <code>ff02::fb/128</code>, which corresponds to the special purpose link-local scope multicast addresses of <code>mDNS6</code>.</p>
+<pre><code>-d ff02::f/128 -p udp -m udp --dport 1900 -j ACCEPT
+</code></pre>
+<p><code>UPnP</code> is also accepted, if the UDP destination port is 1900 and the destination address is the special purpose link-local scope multicast address <code>ff02::f/128</code>.</p>
+<p>All remaining packets are sent to the <code>ufw6-user-input</code> chain that contains user-defined rules. By default it's empty.</p>
+<h3 id="ufw6afterinput">ufw6-after-input</h3>
+<p>The next major chain to be traversed is <code>ufw6-after-input</code>. This chain contains the following rules:</p>
+<pre><code>-p udp -m udp --dport 137 -j ufw6-skip-to-policy-input
+-p udp -m udp --dport 138 -j ufw6-skip-to-policy-input
+-p tcp -m tcp --dport 139 -j ufw6-skip-to-policy-input
+-p tcp -m tcp --dport 445 -j ufw6-skip-to-policy-input
+-p udp -m udp --dport 546 -j ufw6-skip-to-policy-input
+-p udp -m udp --dport 547 -j ufw6-skip-to-policy-input
+</code></pre>
+<p>This set of rules is very similar to the <code>ufw-after-input</code> chain for IPv4. Packets with destination ports for <code>NetBIOS</code>, <code>SMB</code> and <code>DHCPv6</code> are sent to the <code>ufw6-skip-to-policy-input</code> chain that in the default setting contains a single rule:</p>
+<pre><code>-j DROP
+</code></pre>
+<h3 id="ufw6afterlogginginput">ufw6-after-logging-input</h3>
+<p>Packets that made it this far are now entering the <code>ufw6-after-logging-input</code> chain, that only contains a rule for logging:</p>
+<pre><code>-m limit --limit 3/min --limit-burst 10 -j LOG --log-prefix &quot;[UFW BLOCK] &quot;
+</code></pre>
+<p>As before, packets that exceed a rate of 3 packets per minute are logged to syslog.</p>
+<h3 id="ufw6rejectinput--ufw6trackinput">ufw6-reject-input &amp; ufw6-track-input</h3>
+<p>Packets are then sent to the next two empty chains <code>ufw6-reject-input</code> and <code>ufw6-track-input</code> and are eventually dropped, as per the default <code>DROP</code> policy.</p>
+<h2 id="output-handling-ipv6">Output handling (IPv6)</h2>
+<p>As for IPv4, packets that are about to leave a network interface traverse the builtin <code>OUTPUT</code> chain. It is populated by ufw with the following chains:</p>
+<p><img src="/img/ufw-output-ipv6.png" alt="Default ufw rules for outgoing IPv6 packets" title="Default ufw rules for outgoing IPv6 packets"></p>
+<p>The default policy for the <code>OUTPUT</code> chain is set to <code>ACCEPT</code>. All packets that are neither dropped nor rejected are accepted by default.</p>
+<h3 id="ufw6beforeloggingoutput">ufw6-before-logging-output</h3>
+<p>The first chain <code>ufw6-before-logging-output</code> does not contain any entries.</p>
+<h3 id="ufw6beforeoutput">ufw6-before-output</h3>
+<p>Afterwards the <code>ufw6-before-output</code> chain is entered, which as opposed to the IPv4 version, contains many more rules:</p>
+<pre><code>-o lo -j ACCEPT
+-m rt --rt-type 0 -j DROP
+-m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+</code></pre>
+<p>The first rule again ensures that local communication using the <code>lo</code> interface is possible.</p>
+<p><code>Source routing</code> is also denied for packets leaving the host, so all packets that match the <code>rt-type 0</code> are dropped immediately.</p>
+<p>The third rule accepts all packets that belong to an <code>ESTABLISHED</code> or <code>RELATED</code> connection.</p>
+<p>The next rules deal with many ICMPv6 types that we have already seen in the <code>INPUT</code> chain:</p>
+<pre><code>-p ipv6-icmp -m icmp6 --icmpv6-type 1 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 2 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 3 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 4 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 128 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 129 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 133 -m hl --hl-eq 255 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 136 -m hl --hl-eq 255 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 135 -m hl --hl-eq 255 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 134 -m hl --hl-eq 255 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 141 -m hl --hl-eq 255 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 142 -m hl --hl-eq 255 -j ACCEPT
+-s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 130 -j ACCEPT
+-s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 131 -j ACCEPT
+-s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 132 -j ACCEPT
+-s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 143 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 148 -m hl --hl-eq 255 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 149 -m hl --hl-eq 255 -j ACCEPT
+-s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 151 -m hl --hl-eq 1 -j ACCEPT
+-s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 152 -m hl --hl-eq 1 -j ACCEPT
+-s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 153 -m hl --hl-eq 1 -j ACCEPT
+</code></pre>
+<p>As this block of rules is more or less a repitition of the <code>INPUT</code> version, it is not explained in detail. Please refer to the previous section for further information.</p>
+<p>Basically these rules allow ICMPv6 packets of different types. For some it depends on the values of <code>Hop Limit</code> and the source address.</p>
+<p>Afterwards, packets are sent to the empty <code>ufw6-user-output</code> chain.</p>
+<h3 id="ufw6afteroutput--ufw6afterloggingoutput--ufw6rejectoutput">ufw6-after-output &amp; ufw6-after-logging-output &amp; ufw6-reject-output</h3>
+<p>The next three chains <code>ufw6-after-output</code>, <code>ufw6-after-logging-output</code> and <code>ufw6-reject-output</code> are empty.</p>
+<h3 id="ufw6trackoutput">ufw6-track-output</h3>
+<p>The final chain <code>ufw6-track-output</code> contains the following rules:</p>
+<pre><code>-p tcp -m conntrack --ctstate NEW -j ACCEPT
+-p udp -m conntrack --ctstate NEW -j ACCEPT
+</code></pre>
+<p>These rules accept packets that initiate a <code>NEW</code> connection state.</p>
+<p>All remaining packets are accepted as per the default policy. This means that only packets that contain a <code>source routing</code> header are discarded by default.</p>
+<h2 id="forward-handling-ipv6">Forward handling (IPv6)</h2>
+<p>Packets that need to be routed to other systems are traversing the builtin <code>FORWARD</code> chain.</p>
+<p>An overview of the default configuration by ufw is shown below:</p>
+<p><img src="/img/ufw-forward-ipv6.png" alt="Default ufw rules for forwarded IPv6 packets" title="Default ufw rules for forwarded IPv6 packets"></p>
+<p>The default policy for the <code>FORWARD</code> chain is <code>DROP</code>.</p>
+<h3 id="ufw6beforeloggingforward">ufw6-before-logging-forward</h3>
+<p>Packets that are forwarded first enter the <code>ufw6-before-logging-forward</code> chain that does not contain any rules.</p>
+<h3 id="ufw6beforeforward">ufw6-before-forward</h3>
+<p>Afterwards the chain <code>ufw6-before-forward</code> is entered. Some rules are pre-configured by ufw:</p>
+<pre><code>-m rt --rt-type 0 -j DROP
+-m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+</code></pre>
+<p>The first rule again drops packets with <code>source routing</code> header. The second rule only accepts packets that belong to an <code>ESTABLISHED</code> or <code>RELATED</code> connection state.</p>
+<p>Next, some ICMPv6 rules are evaluated:</p>
+<pre><code>-p ipv6-icmp -m icmp6 --icmpv6-type 1 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 2 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 3 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 4 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 128 -j ACCEPT
+-p ipv6-icmp -m icmp6 --icmpv6-type 129 -j ACCEPT
+</code></pre>
+<p>These ICMPv6 types correspond to typical error handling messages and <code>Echo Request</code> and <code>Echo Reply</code> packets. These are accepted immediately.</p>
+<p>Afterwards the empty <code>ufw6-user-forward</code> chain is entered that is used for user-defined <code>FORWARD</code> rules.</p>
+<h3 id="ufw6afterforward">ufw6-after-forward</h3>
+<p>The next chain <code>ufw6-after-forward</code> does not contain any rules.</p>
+<h3 id="ufw6afterloggingforward">ufw6-after-logging-forward</h3>
+<p>The only rule present in the <code>ufw6-after-logging-forward</code> chain performs logging of packets that exceed the rate of 3 packets per minute.</p>
+<pre><code>-m limit --limit 3/min --limit-burst 10 -j LOG --log-prefix &quot;[UFW BLOCK] &quot;
+</code></pre>
+<h3 id="ufw6rejectforward--ufw6trackforward">ufw6-reject-forward &amp; ufw6-track-forward</h3>
+<p>The remaining two chains <code>ufw6-reject-forward</code> and <code>ufw6-track-forward</code> are empty.</p>
+<p>Packets that were not accepted or dropped so far are now dropped as per the default policy.</p>
+<h2 id="fingerprinting-systems-that-use-ufw">Fingerprinting systems that use UFW</h2>
+<p>If you are port scanning hosts, it might be good to know if packet filtering mechanisms are configured that block or slow down port scans.</p>
+<p>Systems that run ufw have some interesting characteristics. Since user-defined rules are placed behind many of the pre-configured rules, some ports might show up as open, even if deny rules were added to the user-defined list.</p>
+<p>A good example for this is DHCP. To recall how DHCP is handled, let's take a quick look at the rule within the chain <code>ufw-before-input</code>:</p>
+<pre><code>-p udp -m udp --sport 67 --dport 68 -j ACCEPT
+</code></pre>
+<p>As this rule allows incoming packets to UDP port 68 if they originate from UDP port 67, it's possible to detect this in a port scan:</p>
+<pre><code>$ sudo nmap -vvv -n -Pn -sU -g 67 --top-ports 20 172.17.0.2
+Host discovery disabled (-Pn). All addresses will be marked 'up' and scan times may be slower.
+Starting Nmap 7.93SVN ( https://nmap.org ) at 2022-11-30 21:25 CET
+Initiating ARP Ping Scan at 21:25
+Scanning 172.17.0.2 [1 port]
+Completed ARP Ping Scan at 21:25, 0.06s elapsed (1 total hosts)
+Initiating UDP Scan at 21:25
+Scanning 172.17.0.2 [20 ports]
+Completed UDP Scan at 21:26, 1.45s elapsed (20 total ports)
+Nmap scan report for 172.17.0.2
+Host is up, received arp-response (0.000071s latency).
+Scanned at 2022-12-01 21:25:59 CET for 2s
+
+PORT      STATE         SERVICE      REASON
+53/udp    open|filtered domain       no-response
+67/udp    open|filtered dhcps        no-response
+68/udp    closed        dhcpc        port-unreach ttl 64
+69/udp    open|filtered tftp         no-response
+123/udp   open|filtered ntp          no-response
+135/udp   open|filtered msrpc        no-response
+137/udp   open|filtered netbios-ns   no-response
+138/udp   open|filtered netbios-dgm  no-response
+139/udp   open|filtered netbios-ssn  no-response
+161/udp   open|filtered snmp         no-response
+162/udp   open|filtered snmptrap     no-response
+445/udp   open|filtered microsoft-ds no-response
+500/udp   open|filtered isakmp       no-response
+514/udp   open|filtered syslog       no-response
+520/udp   open|filtered route        no-response
+631/udp   open|filtered ipp          no-response
+1434/udp  open|filtered ms-sql-m     no-response
+1900/udp  open|filtered upnp         no-response
+4500/udp  open|filtered nat-t-ike    no-response
+49152/udp open|filtered unknown      no-response
+MAC Address: 02:42:AC:11:00:02 (Unknown)
+
+Read data files from: /usr/local/bin/../share/nmap
+Nmap done: 1 IP address (1 host up) scanned in 1.65 seconds
+        Raw packets sent: 54 (4.484KB) | Rcvd: 2 (84B)
+</code></pre>
+<p>The results of a top 20 UDP port scan show that all ports, except port 68, are shown as <code>open|filtered</code>. This makes sense, since the default <code>INPUT</code> policy is <code>DROP</code>. The parameter <code>-g 67</code> was chosen to set the source port to 67, as per the <code>ACCEPT</code> rule in the pre-configured chain. The results show that port 68 is <code>closed</code> and an ICMP message of type <code>Port Unreachable</code> was sent back.</p>
+<p>So, what would happen if users decide to block UDP port 68 by using the ufw cli? Let's try:</p>
+<pre><code>$ sudo ufw deny 68/udp
+Rule added
+Rule added (v6)
+</code></pre>
+<p>The command above added a deny rule for UDP port 68. Another scan is started:</p>
+<pre><code>$ sudo nmap -vvv -n -Pn -sU -g 67 -p 68 172.17.0.2
+Host discovery disabled (-Pn). All addresses will be marked 'up' and scan times may be slower.
+Starting Nmap 7.93SVN ( https://nmap.org ) at 2022-11-30 21:33 CET
+Initiating ARP Ping Scan at 21:33
+Scanning 172.17.0.2 [1 port]
+Completed ARP Ping Scan at 21:33, 0.05s elapsed (1 total hosts)
+Initiating UDP Scan at 21:33
+Scanning 172.17.0.2 [1 port]
+Completed UDP Scan at 21:33, 0.06s elapsed (1 total ports)
+Nmap scan report for 172.17.0.2
+Host is up, received arp-response (0.000025s latency).
+Scanned at 2022-11-30 21:33:34 CET for 0s
+
+PORT   STATE  SERVICE REASON
+68/udp closed dhcpc   port-unreach ttl 64
+MAC Address: 02:42:AC:11:00:02 (Unknown)
+
+Read data files from: /usr/local/bin/../share/nmap
+Nmap done: 1 IP address (1 host up) scanned in 0.20 seconds
+        Raw packets sent: 2 (56B) | Rcvd: 2 (84B)
+</code></pre>
+<p>The port still shows up as <code>closed</code>. The relevant iptables rules confirm why this happens:</p>
+<pre><code>Chain ufw-before-input (1 references)
+target     prot opt source               destination         
+[...]
+ACCEPT     udp  --  0.0.0.0/0            0.0.0.0/0            udp spt:67 dpt:68
+[...]
+ufw-user-input  all  --  0.0.0.0/0            0.0.0.0/0           
+
+Chain ufw-user-input (1 references)
+target     prot opt source               destination         
+DROP       udp  --  0.0.0.0/0            0.0.0.0/0            udp dpt:68
+</code></pre>
+<p>The <code>ACCEPT</code> rule is evaluated before the <code>ufw-user-input</code> chain with the <code>DROP</code> rule is called.</p>
+<p>In order to block port 68/UDP, users would need to manually adjust the files <code>/etc/ufw/before.rules</code> or <code>/etc/ufw/before6.rules</code>.</p>
+<p>This means that scanning UDP port 68 with source port of 67 is a good way to detect ufw. Please note that other firewalls might also allow port 68 by default, and this behaviour might not be unique to ufw.</p>
+<p>The <code>ufw-before-input</code> chain also accepts certain ICMP types, for example ICMP type 8 <code>Echo Request</code>. ICMP type 13 <code>Timestamp Request</code> and ICMP type 17 <code>Address Mask Request</code> are not allowed and therefore dropped as per the default policy. Let's validate this with 3 consecutive scans using ICMP types 8, 13 and 17:</p>
+<pre><code>$ sudo nmap -vvv -n -sn -PE --send-ip 172.17.0.2
+Starting Nmap 7.93SVN ( https://nmap.org ) at 2022-11-30 21:53 CET
+Initiating Ping Scan at 21:53
+Scanning 172.17.0.2 [1 port]
+Completed Ping Scan at 21:53, 0.03s elapsed (1 total hosts)
+Nmap scan report for 172.17.0.2
+Host is up, received echo-reply ttl 64 (0.00015s latency).
+MAC Address: 02:42:AC:11:00:02 (Unknown)
+Read data files from: /usr/local/bin/../share/nmap
+Nmap done: 1 IP address (1 host up) scanned in 0.15 seconds
+        Raw packets sent: 1 (28B) | Rcvd: 1 (28B)
+
+$ sudo nmap -vvv -n -sn -PP --send-ip 172.17.0.2
+Starting Nmap 7.93SVN ( https://nmap.org ) at 2022-11-30 21:53 CET
+Initiating Ping Scan at 21:53
+Scanning 172.17.0.2 [1 port]
+Completed Ping Scan at 21:54, 2.02s elapsed (1 total hosts)
+Nmap scan report for 172.17.0.2 [host down, received no-response]
+Note: Host seems down. If it is really up, but blocking our ping probes, try -Pn
+Nmap done: 1 IP address (0 hosts up) scanned in 2.06 seconds
+        Raw packets sent: 2 (80B) | Rcvd: 0 (0B)
+
+$ sudo nmap -vvv -n -sn -PM --send-ip 172.17.0.2
+Starting Nmap 7.93SVN ( https://nmap.org ) at 2022-11-30 21:54 CET
+Initiating Ping Scan at 21:54
+Scanning 172.17.0.2 [1 port]
+Completed Ping Scan at 21:54, 2.03s elapsed (1 total hosts)
+Nmap scan report for 172.17.0.2 [host down, received no-response]
+Note: Host seems down. If it is really up, but blocking our ping probes, try -Pn
+Nmap done: 1 IP address (0 hosts up) scanned in 2.08 seconds
+        Raw packets sent: 2 (64B) | Rcvd: 0 (0B)
+</code></pre>
+<p>The only response is shown in the first scan in which ICMP type 8 was used. In combination with the DHCP scan, this is another good candidate to detect ufw.</p>
+<p>The IPv6 ruleset also containes a large number of ICMPv6 related rules, of which two allow the ICMPv6 types <code>Echo Request</code> and <code>Neighbor Solicitation</code>.</p>
+<p>A <code>Neighbor Solicitation</code> request can be sent using the command line utility <code>ndisc6</code>:</p>
+<pre><code>$ ndisc6 fe80::42:acff:fe11:2 eth0
+Soliciting fe80::42:acff:fe11:2 (fe80::42:acff:fe11:2) on eth0...
+Target link-layer address: 02:42:AC:11:00:02
+from fe80::42:acff:fe11:2
+</code></pre>
+<p>The command above shows that a response was received, which means that incoming ICMPv6 type 135 packets were accepted.</p>
+<p><code>Echo Request</code> (ICMPv6 type 128) packets could be sent using <code>ping6</code>:</p>
+<pre><code>$ ping6 -c 1 fe80::42:acff:fe11:2%eth0
+PING fe80::42:acff:fe11:2%eth0(fe80::42:acff:fe11:2%eth0) 56 data bytes
+64 bytes from fe80::42:acff:fe11:2%eth0: icmp_seq=1 ttl=64 time=0.172 ms
+
+--- fe80::42:acff:fe11:2%eth0 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.172/0.172/0.172/0.000 ms
+</code></pre>
+<p>After submitting this request the host answered successfully.</p>
+<p>These two checks above are not very meaningful, as these allow rules could be present in any firewall. Also we would observe the same behaviour if no firewalls would be present or if all packets would be accepted by a firewall.</p>
+<p>Therefore, for accurate fingerprinting it is recommended to cross-check as many of the default allow and deny rules (explicit and implicit rules).</p>
+<p>A rule that is more suitable for this purpose is the following, covering DHCPv6:</p>
+<pre><code>-A ufw6-before-input -s fe80::/10 -d fe80::/10 -p udp -m udp --sport 547 --dport 546 -j ACCEPT
+</code></pre>
+<p>As this rule only accepts link-local UDP datagrams that arrive on port 546 and originate from port 547, this is a good test case for nmap:</p>
+<pre><code>root@a35d59e6e8d7:~# nmap -vvv -n -Pn -sU -6 -e eth0 -g 547 -p 546 fe80::42:acff:fe11:2
+Starting Nmap 7.80 ( https://nmap.org ) at 2022-11-30 21:56 UTC
+Initiating ND Ping Scan at 21:56
+Scanning fe80::42:acff:fe11:2 [1 port]
+Completed ND Ping Scan at 15:56, 0.03s elapsed (1 total hosts)
+Initiating UDP Scan at 21:56
+Scanning fe80::42:acff:fe11:2 [1 port]
+Completed UDP Scan at 21:56, 0.02s elapsed (1 total ports)
+Nmap scan report for fe80::42:acff:fe11:2
+Host is up, received nd-response (0.000069s latency).
+Scanned at 2022-12-01 21:56:26 UTC for 0s
+
+PORT    STATE  SERVICE       REASON
+546/udp closed dhcpv6-client port-unreach ttl 64
+MAC Address: 02:42:AC:11:00:02 (Unknown)
+
+Read data files from: /usr/bin/../share/nmap
+Nmap done: 1 IP address (1 host up) scanned in 0.25 seconds
+        Raw packets sent: 2 (120B) | Rcvd: 2 (168B)
+</code></pre>
+<p>The scan results above show that the port is closed (not filtered) because the rule matched.</p>
+<p>Let's try the same scan, but without specifying the source port:</p>
+<pre><code>root@a35d59e6e8d7:~# nmap -vvv -n -Pn -sU -6 -e eth0 -p 546 fe80::42:acff:fe11:2
+Starting Nmap 7.80 ( https://nmap.org ) at 2022-11-30 21:56 UTC
+Initiating ND Ping Scan at 21:56
+Scanning fe80::42:acff:fe11:2 [1 port]
+Completed ND Ping Scan at 21:56, 0.03s elapsed (1 total hosts)
+Initiating UDP Scan at 21:56
+Scanning fe80::42:acff:fe11:2 [1 port]
+Completed UDP Scan at 21:56, 0.02s elapsed (1 total ports)
+Nmap scan report for fe80::42:acff:fe11:2
+Host is up, received nd-response (0.000069s latency).
+Scanned at 2022-12-01 21:56:26 UTC for 0s
+
+PORT    STATE         SERVICE       REASON
+546/udp open|filtered dhcpv6-client no-response
+MAC Address: 02:42:AC:11:00:02 (Unknown)
+
+Read data files from: /usr/bin/../share/nmap
+Nmap done: 1 IP address (1 host up) scanned in 0.65 seconds
+        Raw packets sent: 2 (120B) | Rcvd: 2 (168B)
+</code></pre>
+<p>This time the port shows up as <code>open|filtered</code> because the allow rule does not match and the default policy dropped the datagram.</p>
+<p>There is another interesting behaviour with the default ufw rules and default Debian or Ubuntu kernel settings. So far we have seen many rules that allow packets belonging to <code>ESTABLISHED</code> or <code>RELATED</code> connections. If new connections are created, the conntrack state is <code>NEW</code> - but what exactly does <code>NEW</code> mean?</p>
+<p>Incoming TCP-SYN packets are the best example for attempts to create a new connection. For UDP usually the first datagram can be referred to as <code>NEW</code>. But that's not it. Let's take a look at the sysctl parameter <code>nf_conntrack_tcp_loose</code> and its documentation [<a href="https://www.kernel.org/doc/Documentation/networking/nf_conntrack-sysctl.txt">6</a>]:</p>
+<pre><code>nf_conntrack_tcp_loose - BOOLEAN
+    0 - disabled
+    not 0 - enabled (default)
+
+    If it is set to zero, we disable picking up already established
+    connections.
+</code></pre>
+<p>This variable defines how strict <code>conntrack</code> is handling connections. On default Debian or Ubuntu installations this variable is set to 1, which means that &ldquo;<em>picking up already established connections</em>&rdquo; is enabled.</p>
+<p>In fact TCP packets carrying the <code>ACK</code> flag are also considered <code>NEW</code>, if this variable is set to 1. Consequently, if arbitrary ACKs are allowed, <code>ACK-scans</code> are allowed as well.</p>
+<p>Let's try this by first adding an allow rule for port 22/TCP:</p>
+<pre><code>root@9ad217af69b6:~# ufw allow 22/tcp
+Rule added
+Rule added (v6)
+</code></pre>
+<p>Now with the new user-defined rule in place, let's run an <code>ACK-scan</code>:</p>
+<pre><code>root@a35d59e6e8d7:~# nmap -vvv -n -Pn -sA -p 22 172.17.0.2
+Starting Nmap 7.80 ( https://nmap.org ) at 2022-11-30 21:58 UTC
+Initiating ARP Ping Scan at 21:58
+Scanning 172.17.0.2 [1 port]
+Completed ARP Ping Scan at 21:58, 0.02s elapsed (1 total hosts)
+Initiating ACK Scan at 21:58
+Scanning 172.17.0.2 [1 port]
+Completed ACK Scan at 21:58, 0.02s elapsed (1 total ports)
+Nmap scan report for 172.17.0.2
+Host is up, received arp-response (0.000044s latency).
+Scanned at 2022-11-30 21:58:42 UTC for 0s
+
+PORT   STATE      SERVICE REASON
+22/tcp unfiltered ssh     reset ttl 64
+MAC Address: 02:42:AC:11:00:02 (Unknown)
+
+Read data files from: /usr/bin/../share/nmap
+Nmap done: 1 IP address (1 host up) scanned in 0.25 seconds
+        Raw packets sent: 2 (68B) | Rcvd: 2 (68B)
+</code></pre>
+<p>The port shows up as <code>unfiltered</code>, because a <code>TCP-RST</code> was sent in response. Please note that it is not possible to identify ports that were not explicitely allowed, which means that an <code>ACK-scan</code> wouldn't bypass any intended deny rules. Nevertheless it's good to keep in mind that the rules added by ufw also allow <code>ACK-scans</code> by default.</p>
+<p>In the previous sections we have seen that the <code>ufw limit</code> command allows ports and adds a rate-limiting mechanism that rejects packets if 6 packets were detected within the last 30 seconds. This can be easily detected, by sending 6 packets within a short timeframe. For the example above, the command <code>ufw limit 22/tcp</code> was executed before:</p>
+<pre><code>$ nc -v -w 0 192.168.0.2 22
+Connection to 192.168.0.2 22 port [tcp/sunrpc] succeeded!
+$ nc -v -w 0 192.168.0.2 22
+Connection to 192.168.0.2 22 port [tcp/sunrpc] succeeded!
+$ nc -v -w 0 192.168.0.2 22
+Connection to 192.168.0.2 22 port [tcp/sunrpc] succeeded!
+$ nc -v -w 0 192.168.0.2 22
+Connection to 192.168.0.2 22 port [tcp/sunrpc] succeeded!
+$ nc -v -w 0 192.168.0.2 22
+Connection to 192.168.0.2 22 port [tcp/sunrpc] succeeded!
+$ nc -v -w 0 192.168.0.2 22
+nc: connect to 192.168.0.2 port 22 (tcp) failed: Connection refused
+</code></pre>
+<p>The 6th connection request was rejected by the remote system.</p>
+<h2 id="security-implications-and-summary">Security implications and summary</h2>
+<p>After providing this overview about default ufw rules and characteristics, what are the security implications?</p>
+<p>First of all the default policy for incoming packets ensures that packets that were not explicitely allowed are dropped. Ufw defines some exclusions for <code>RELATED</code> and <code>ESTABLISHED</code> connections, selected ICMP/ICMPv6 packets and applications like DHCP/DHCPv6, mDNS and SSDP/UPnP.</p>
+<p>If these services are running and are either misconfigured or affected by vulnerabilities, the default rules could allow attacks against these services.</p>
+<p>In post-exploitation scenarios attackers could use unfiltered ports to bind malicious services on them. Whether this is successful depends on the granted privileges, as binding on ports &lt; 1024 requires either root privileges or the <code>cap_net_bind_service</code> capability.</p>
+<p>As the ufw default ruleset allows almost all types of egress traffic, it would be easy to establish C2 communication after a successful compromise.</p>
+<p>In this blog post only the default rules were inspected. For additional hardening some rules could be added to the <code>OUTPUT</code> chain to further lock down the system, however the general ruleset offers a good baseline aready. Furthermore it should be noted that ufw is an frontend for iptables rather than a firewall. For managing finegrained and advanced rules, knowledge of iptables/netfilter is required.</p>
+<h2 id="references">References</h2>
+<p>[<a href="https://home.regit.org/netfilter-en/secure-use-of-helpers/">1</a>]: <a href="https://home.regit.org/netfilter-en/secure-use-of-helpers/">https://home.regit.org/netfilter-en/secure-use-of-helpers/</a></p>
+<p>[<a href="https://github.com/torvalds/linux/commit/486dcf43da7815baa615822f3e46883ccca5400f">2</a>]: <a href="https://github.com/torvalds/linux/commit/486dcf43da7815baa615822f3e46883ccca5400f">https://github.com/torvalds/linux/commit/486dcf43da7815baa615822f3e46883ccca5400f</a></p>
+<p>[<a href="https://www.ietf.org/rfc/rfc5095.txt">3</a>]: <a href="https://www.ietf.org/rfc/rfc5095.txt">https://www.ietf.org/rfc/rfc5095.txt</a></p>
+<p>[<a href="https://www.ietf.org/rfc/rfc2461.txt">4</a>]: <a href="https://www.ietf.org/rfc/rfc2461.txt">https://www.ietf.org/rfc/rfc2461.txt</a></p>
+<p>[<a href="https://www.ietf.org/rfc/rfc2710.txt">5</a>]: <a href="https://www.ietf.org/rfc/rfc2710.txt">https://www.ietf.org/rfc/rfc2710.txt</a></p>
+<p>[<a href="https://www.kernel.org/doc/Documentation/networking/nf_conntrack-sysctl.txt">6</a>]: <a href="https://www.kernel.org/doc/Documentation/networking/nf_conntrack-sysctl.txt">https://www.kernel.org/doc/Documentation/networking/nf_conntrack-sysctl.txt</a></p>
+
+    </section>
+    <footer class="post-footer">
+      
+    </footer>
+  </article>
+</main>
+
+        <footer class="site-footer">
+  <section class="rss"><a class="subscribe-button icon-feed" href="/index.xml"></a></section>
+  <section class="twitter"><a class="icon-twitter" href="https://twitter.com/_bka_"> _bka_</a></section>
+  
+  <section class="copyright">&copy; 2022 blog.kanbach.org</section>
+  <section class="poweredby"><a href="http://thedarkroast.com/arabica">Arabica</a> theme by Sean Lunsford. Published with <a href="https://gohugo.io">Hugo</a>.</section>
+</footer>
+
+
+
+    </body>
+</html>
