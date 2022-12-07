@@ -79,8 +79,7 @@
       </section>
     </header>
     <section class="post-content">
-      <h2 id="overview">Overview</h2>
-<p>This blogpost aims to explain some of the inner workings of the &ldquo;uncomplicated firewall&rdquo; (ufw) that is available for Ubuntu installations since 8.04 LTS and for Debian installations since 10.</p>
+      <p>This blogpost aims to explain some of the inner workings of the &ldquo;uncomplicated firewall&rdquo; (ufw) that is available for Ubuntu installations since 8.04 LTS and for Debian installations since 10.</p>
 <p>Before going into detail, ufw is not a firewall but a frontend for iptables. Iptables is a frontend for the netfilter kernel module that is performing packet filtering within the Linux kernel. Therefore all actions that are performed via ufw can be directly queried using the iptables command.</p>
 <p>The following sections deal with the default rules that are added by ufw and describes possible implications of these rules. Furthermore some ways are shown how ufw firewalls could be detected.</p>
 <h2 id="default-rule-set-ipv4">Default rule set (IPv4)</h2>

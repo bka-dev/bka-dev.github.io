@@ -16,7 +16,7 @@
       <pubDate>Wed, 07 Dec 2022 00:00:00 +0000</pubDate>
       
       <guid>https://blog.kanbach.org/post/firewalls-under-the-hood-ufw/</guid>
-      <description>Overview This blogpost aims to explain some of the inner workings of the &amp;ldquo;uncomplicated firewall&amp;rdquo; (ufw) that is available for Ubuntu installations since 8.04 LTS and for Debian installations since 10.
+      <description>This blogpost aims to explain some of the inner workings of the &amp;ldquo;uncomplicated firewall&amp;rdquo; (ufw) that is available for Ubuntu installations since 8.04 LTS and for Debian installations since 10.
 Before going into detail, ufw is not a firewall but a frontend for iptables. Iptables is a frontend for the netfilter kernel module that is performing packet filtering within the Linux kernel. Therefore all actions that are performed via ufw can be directly queried using the iptables command.</description>
     </item>
     
