@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    
+    <title>
+      
+      Windows OOBE Breakout Revived - blog.kanbach.org
+      
+		</title>
+
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="twitter:card" content="summary" />
+<meta name="twitter:site" content="blog.kanbach.org" />
+<meta name="twitter:creator" content="_bka_" />
+<meta property="og:url" content="https://blog.kanbach.org/post/windows-oobe-breakout-revived/" />
+<meta property="og:title" content="Windows OOBE Breakout Revived" />
+<meta property="og:description" content=" IT-Security and stuff - Windows OOBE Breakout Revived " />
+
+    
+    <link rel="stylesheet" type="text/css" href="/assets/css/normalize.css" />
+    <link rel="stylesheet" type="text/css" href="/assets/css/icons.css" />
+    <link rel="stylesheet" type="text/css" href="/assets/css/screen.css" />
+    
+    <link href="https://fonts.loli.net/css?family=Bree+Serif|Lato:100,100i,300,300i,400,400i,700,700i|Source+Code+Pro:300,400,500,700" rel="stylesheet">
+    
+
+    
+    <script src="https://cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="/assets/bigfoot/dist/bigfoot.js"></script>
+    <link rel="stylesheet" type="text/css" href="/assets/bigfoot/dist/bigfoot-number.css" />
+    <script type="text/javascript">
+        $.bigfoot();
+    </script>
+    
+    
+</head>
+
+    <body class="post-template">
+        <header class="main-header">
+	<div class="main-header-content">
+		<h1 class="blog-title">
+			<a href="/">
+				
+           blog.kanbach.org
+				
+			</a>
+		</h1>
+		<h2 class="blog-description">IT-Security and stuff</h2>
+	</div>
+
+	<div class="nav">
+    
+		
+      <a class="nav- " role="presentation" href="/post/escaping-from-mozilla-firefox-in-restricted-environments/">Escaping from Mozilla Firefox in Restricted Environments</a>
+		
+      <a class="nav- " role="presentation" href="/post/firewalls-under-the-hood-ufw/">Firewalls under the hood - UFW</a>
+		
+      <a class="nav- " role="presentation" href="/post/how-to-permanently-change-a-mac-address-using-ethtool/">How to permanently change a MAC address using ethtool</a>
+		
+      <a class="nav- " role="presentation" href="/post/network-security-implications-of-host-models/">Network Security Implications of Host Models</a>
+		
+      <a class="nav- nav-current" role="presentation" href="/post/windows-oobe-breakout-revived/">Windows OOBE Breakout Revived</a>
+		
+      <a class="nav- " role="presentation" href="/about/">About</a>
+		
+	</div>
+</header>
+
+        
+<main class="content" role="main">
+  <article class="post">
+    <header class="post-header">
+      
+      <h2 class="post-title">Windows OOBE Breakout Revived</h2>
+      <section class="post-meta">
+        <time class="post-date">2025-08-12</time>
+      </section>
+    </header>
+    <section class="post-content">
+      <p>This is a short story that describes an alternative way of breaking out of the Windows Out-of-Box-Experience (OOBE) and gaining access to the command line of Windows with the privileges of the user <code>defaultuser0</code> who is part of the local Administrators group.</p>
+<h2 id="what-is-oobe">What is OOBE?</h2>
+<p>To get everyone on board, I would like to briefly describe what OOBE is, and when these screens appear to the user.</p>
+<p>The Windows Out-of-Box-Experience is a series of screens that the user is presented when Windows is initially started after its installation. Alternatively, OOBE can also be enforced, if the Windows tool <code>Sysprep</code> is executed, that could be used to place Windows into the OOBE state after a reboot.</p>
+<p>OOBE is typically used for initial configuration of the operating system that covers language selection, keyboard layout, adding initial user accounts and configuring the privacy settings.</p>
+<p><img src="/img/oobe-initial.png" alt="Initial OOBE screen" title="Initial OOBE screen"></p>
+<h2 id="blast-from-the-past-shift--f10-for-elevated-command-prompt">Blast from the past: Shift + F10 for elevated command prompt</h2>
+<p>In the history of OOBE, the keyboard shortcut <code>Shift + F10</code> is a well-known, yet dangerous feature within OOBE that could be leveraged by regular domain users who first perform a push-button reset via the Intune Company Portal to reset their PC and then utilize <code>Shift + F10</code> in OOBE to spawn an elevated command shell.</p>
+<p><img src="/img/oobe-shift-f10.png" alt="Shell when pressing Ctrl+Shift+F10" title="Shell when pressing Ctrl+Shift+F10"></p>
+<p>OOBE is executed in the context of the local user account &ldquo;defaultuser0&rdquo; that is a temporary user during OOBE and is a member of the local Administrator group. A command shell running as this user could be used to create further local administrator accounts, change the password of the built-in administrator, or place a backdoor on the operating system.</p>
+<p>Luckily there is a possibility to disable the shortcut, by placing an empty file called <code>DisableCMDRequest.tag</code> into the folder <code>C:\Windows\Setup\Scripts\</code>. The file must be present after each wipe, and how this could be achieved is well described in <a href="https://call4cloud.nl/the-oobe-massacre-the-beginning-of-shift-f10/"><a href="https://call4cloud.nl/the-oobe-massacre-the-beginning-of-shift-f10/">https://call4cloud.nl/the-oobe-massacre-the-beginning-of-shift-f10/</a></a>.</p>
+<p>So now it would be safe to assume, that by creating this file no breakout would be possible anymore, right? Well, not exactly, and the new way of spawning an elevated shell is described in the following section.</p>
+<h2 id="alternative-way-of-launching-a-shell-win--r-to-the-rescue">Alternative way of launching a shell: Win + R to the rescue</h2>
+<p>Within OOBE it is possible to spawn a hidden command shell, or execute arbitrary other commands via the <code>Run</code> dialogue. This technique is not affiliated to the <code>Shift + F10</code> keyboard shortcut.</p>
+<p>To launch the <code>Run</code> dialogue, it is possible to use the keyboard shortcut <code>Win + R</code> like you would do in a normal Windows session. Wait&hellip; is it really that simple? Well, almost - For this keyboard shortcut to work, the focus needs to be on a different window first. As an example, the tool <code>Magnify.exe</code> can be opened via the accessibility tools. When the <code>Magnify</code> window is clicked and <code>Win + R</code> is entered, the <code>Run</code> dialogue is spawned.</p>
+<p>This dialogue however resides in the background and can't be seen directly. However, its existence can be revealed by entering <code>Alt+Tab</code> to switch between windows.</p>
+<p>As mentioned before, the user associated with the dialogue and all subsequent actions is <code>defaultuser0</code>. Since this user is an administrator, it is possible to launch an elevated command shell via the <code>Run</code> dialogue.</p>
+<p>To make <code>Run</code> launch an elevated shell, first the focus has to be on the <code>Run</code> dialogue window. Then by typing in <code>cmd.exe</code> and pressing <code>Ctrl + Shift + Enter</code> afterwards, an elevation prompt is executed (<code>Consent</code>). When this UAC prompt is accepted by clicking &ldquo;Yes&rdquo;, an elevated command prompt is opened, which however still resides in the background. Nevertheless, by typing in commands, it is possible to interact with this shell.</p>
+<p><img src="/img/oobe-cmd.png" alt="Shell via Win+R shortcut" title="Shell via Win+R shortcut"></p>
+<p><img src="/img/oobe-privilege-escalation-poc_bastian-kanbach.gif" alt="Interactive Demo of Spawning a Shell" title="Interactive Demo of spawing a shell"></p>
+<p>Local users could exploit this behaviour to create backdoor accounts or modify the system in an arbitrary manner. This even works, if the file <code>C:\Windows\Setup\Scripts\DisableCMDRequest.tag</code> is present, a file intended to block the well-known <code>Shift + F10</code> keyboard shortcut from spawning a visible elevated shell.</p>
+<blockquote>
+<p>At this moment no remediation is known and Microsoft does not consider this keyboard shortcut as a security issue (<em>&quot;[&hellip;] due to that fact that OOBE runs in an admin session and leaving new device unattended during OOBE is like leaving the machine unlocked.&quot;</em>).</p>
+</blockquote>
+<p>For this reason, the best way to prevent domain users from resetting their PC via the company portal and then act as a local admin in OOBE is to hide the reset button from users in the Company Portal. To do this, first navigate to the <code>Microsoft Intune admin center</code> then in the left pane, select <code>Tenant administration</code> and then <code>Customization</code>. Afterwards, either modify the default policy or a custom one if you created one in the past. In the policy, make sure that <code>Hide reset button on corporate Windows devices</code> is checked.</p>
+<p><img src="/img/company-portal-hide-reset-button.png" alt="Hide reset button function in Company Portal" title="Hide reset button function in Company Portal"></p>
+<h2 id="conclusion">Conclusion</h2>
+<p>Windows OOBE presents the user an open by default interface that runs with high user privileges. Allowing corporate, low-privileged users this level of access poses an inherent security risk. However sometimes entering the OOBE screen is possible for users as well via the push-button reset function in Microsoft Intune. Therefore Microsoft implemented measures to lock down OOBE in order to prevent gaining a shell via simple means. As this measure however is incomplete, since it doesn't take all possible keyboard shortcuts into account, it is still possible for arbitrary users within OOBE to spawn a shell. Microsoft treats it as a &ldquo;won't-fix&rdquo;, so be careful about whom to grant the push-button reset privileges.</p>
+<h2 id="references">References</h2>
+<p>[<a href="https://call4cloud.nl/the-oobe-massacre-the-beginning-of-shift-f10/">1</a>]: <a href="https://call4cloud.nl/the-oobe-massacre-the-beginning-of-shift-f10/">https://call4cloud.nl/the-oobe-massacre-the-beginning-of-shift-f10/</a></p>
+
+    </section>
+    <footer class="post-footer">
+      
+    </footer>
+  </article>
+</main>
+
+        <footer class="site-footer">
+  <section class="rss"><a class="subscribe-button icon-feed" href="/index.xml"></a></section>
+  <section class="twitter"><a class="icon-twitter" href="https://x.com/_bka_"> _bka_</a></section>
+  
+  <section class="copyright">&copy; 2025 blog.kanbach.org</section>
+  <section class="poweredby"><a href="http://thedarkroast.com/arabica">Arabica</a> theme by Sean Lunsford. Published with <a href="https://gohugo.io">Hugo</a>.</section>
+</footer>
+
+
+
+    </body>
+</html>

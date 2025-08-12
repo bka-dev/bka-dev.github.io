@@ -3,6 +3,11 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>https://blog.kanbach.org/post/windows-oobe-breakout-revived/</loc>
+    <lastmod>2025-08-12T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://blog.kanbach.org/post/firewalls-under-the-hood-ufw/</loc>
     <lastmod>2022-12-07T00:00:00+00:00</lastmod>
   </url>
@@ -24,12 +29,12 @@
   
   <url>
     <loc>https://blog.kanbach.org/</loc>
-    <lastmod>2022-12-07T00:00:00+00:00</lastmod>
+    <lastmod>2025-08-12T00:00:00+00:00</lastmod>
   </url>
   
   <url>
     <loc>https://blog.kanbach.org/post/</loc>
-    <lastmod>2022-12-07T00:00:00+00:00</lastmod>
+    <lastmod>2025-08-12T00:00:00+00:00</lastmod>
   </url>
   
   <url>

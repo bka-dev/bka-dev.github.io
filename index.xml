@@ -5,10 +5,21 @@
     <link>https://blog.kanbach.org/</link>
     <description>Recent content on blog.kanbach.org</description>
     <generator>Hugo -- gohugo.io</generator>
-    <lastBuildDate>Wed, 07 Dec 2022 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 12 Aug 2025 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="https://blog.kanbach.org/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Windows OOBE Breakout Revived</title>
+      <link>https://blog.kanbach.org/post/windows-oobe-breakout-revived/</link>
+      <pubDate>Tue, 12 Aug 2025 00:00:00 +0000</pubDate>
+      
+      <guid>https://blog.kanbach.org/post/windows-oobe-breakout-revived/</guid>
+      <description>This is a short story that describes an alternative way of breaking out of the Windows Out-of-Box-Experience (OOBE) and gaining access to the command line of Windows with the privileges of the user defaultuser0 who is part of the local Administrators group.
+What is OOBE? To get everyone on board, I would like to briefly describe what OOBE is, and when these screens appear to the user.
+The Windows Out-of-Box-Experience is a series of screens that the user is presented when Windows is initially started after its installation.</description>
+    </item>
     
     <item>
       <title>Firewalls under the hood - UFW</title>
@@ -64,7 +75,7 @@ While these changes are only temporary, it&#39;s also possible to instruct the o
       
       <guid>https://blog.kanbach.org/about/</guid>
       <description>Hi all, here I&#39;ll write about IT-Sec and in-depth technical stuff in general.
-If you want to get in touch contact me via Twitter: bka.</description>
+If you want to get in touch contact me via BlueSky: bka-sec.bsky.social, on X: bka, or on LinkedIn.</description>
     </item>
     
   </channel>
